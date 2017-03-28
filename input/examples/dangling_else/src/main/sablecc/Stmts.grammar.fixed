@@ -1,0 +1,51 @@
+Package com.example.compiler;
+
+Helpers
+    tab = 9;
+    cr = 13;
+    lf = 10;
+
+    alpha = ['a'..'z'] | ['A'..'Z'];
+    alnum = alpha | ['0'..'9'];
+
+Tokens
+    exp = 'EXP';
+    if = 'if';
+    then = 'then';
+    else = 'else';
+
+    lbrace = '{';
+    rbrace = '}';
+
+    semicolon = ';';
+
+    identifier = alpha alnum*;
+    assign_op = '<-';
+
+    while = 'while';
+
+    do  = 'do';
+
+    whitespace = ' ' | cr | lf | tab;
+
+Ignored Tokens
+    whitespace;
+
+Productions
+    stmt_list = stmt*;
+    stmt = {noop} semicolon
+         | {assignment} identifier assign_op exp semicolon
+         | {if} if_stmt
+         | {while} pwhile
+         | {block} lbrace stmt_list rbrace;
+    if_stmt = {no_else} if exp then [then_stmt]:stmt
+            | {with_else} if exp then [then_stmt]:stmt_with_else else [else_stmt]:stmt;
+
+    stmt_with_else = {noop} semicolon
+                   | {assignment} identifier assign_op exp semicolon
+                   | {if} if_else_stmt
+                   | {while} pwhile
+                   | {block} lbrace stmt_list rbrace;
+    if_else_stmt = if exp then [then_stmt]:stmt_with_else else [else_stmt]:stmt_with_else;
+
+    pwhile     		= while exp do stmt;
