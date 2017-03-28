@@ -17,24 +17,24 @@ fun main () : nothing
         changed <- 0;
         i <- 0;
         while i < n do {
-          if x[i] > x[i+1] then {
-            swap(x[i],x[i+1]);
+          if x[i] > x[i+ 1] then {
+            swap(x[i],x[i+ 1]);
             changed <- 1;
           }
-          i <- i+1;
+          i <- i+ 1;
         }
       }
    }
 
    fun putArray (ref msg : char[]; n : int; ref x : int[]) : nothing
-      var i : int
+      var i : int;
    {
       puts(msg);
       i <- 0;
       while i < n do {
         if i > 0 then writeString(", ");
         puti(x[i]);
-        i <- i+1;
+        i <- i- 1;
       }
       puts("\n");
    }

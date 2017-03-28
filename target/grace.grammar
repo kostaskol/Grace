@@ -1,138 +1,136 @@
 Package graceLang;
 
 Helpers
-  lower           = ['a' .. 'z'];
-  upper           = ['A' .. 'Z'];
-  digit           = ['0' .. '9'];
+  lower             = ['a' .. 'z'];
+  upper             = ['A' .. 'Z'];
+  digit             = ['0' .. '9'];
   all							= [0x0 .. 0xffff];
-  ascii_all       = [32 .. 127];
+  ascii_all         = [32 .. 127];
 
-  hex_num         = ['a' .. 'f'] | ['A' .. 'F'];
+  hex_num           = ['a' .. 'f'] | ['A' .. 'F'];
 
-  cr              = 13;
-  lf              = 10;
-  tab             = 9;
-  eol             = cr lf | cr | lf;
-  not_cr_lf       = [all - [cr + lf]];
-  not_com         = [all - ['$' + '$']];
-  not_quote       = [all - '''];
+  cr                = 13;
+  lf                = 10;
+  tab               = 9;
+  eol               = cr lf | cr | lf;
+  not_cr_lf         = [all - [cr + lf]];
+  not_com           = [all - ['$' + '$']];
+  not_quote         = [all - '''];
 
-  letter          = upper | lower;
-  number          = digit+;
+  letter            = upper | lower;
+  number            = digit+;
 
-  id              = letter (letter | '_' | number)*;
+  id                = letter (letter | '_' | number)*;
 
-  let             = all;
-    hex_digit     = digit | hex_num;
-    hex           = ('0' ('x' | 'X')) hex_digit+;
+  let               = all;
+    hex_digit       = digit | hex_num;
+    hex             = ('0' ('x' | 'X')) hex_digit+;
 
-  ws              = (' ' | tab | eol)+;
+  ws                = (' ' | tab | eol)+;
   mul_com        	= '$$' not_com* '$$';
-  line_com        = '$' not_cr_lf* eol*;	// We use eol* for a line comment ending because
+  line_com          = '$' not_cr_lf* eol*;	// We use eol* for a line comment ending because
             // otherwise it would not work if there was a comment at the end of the file
 
-  plus						= '+';
-  minus						= '-';
-  times						= '*';
-  div							= 'div';
-  mod							= 'mod';
+  plus		        = '+';
+  minus				= '-';
+  times				= '*';
+  div				= 'div';
+  mod				= 'mod';
 
   gt	            = '>';
   ge	            = '>=';
-  equal	          = '=';
+  equal	            = '=';
   lt	            = '<';
   le	            = '<=';
   dif	            = '#';
 
-  sign            = plus | minus;
-
-  num_or_id       = number | id;
+  sign              = plus | minus;
 
 
 // ______________________________________________________________________________________________________________
 Tokens
   // Operators
-  plus					= '+';
-  minus					= '-';
-  times					= '*';
-  div						= 'div';
-  mod						= 'mod';
+  plus				= '+';
+  minus				= '-';
+  times				= '*';
+  div				= 'div';
+  mod				= 'mod';
 
-  assign				= '<-';
+  assign			= '<-';
 
 
 
     // Data types
   char				= 'char';
-  int					= 'int';
+  int				= 'int';
 
   // Conditionals
-  if					= 'if';
+  if				= 'if';
   then				= 'then';
   else				= 'else';
 
   // Conditions (boolean expressions)
-  not					= 'not';
-  and       	= 'and';
-  or        	= 'or';
+  not				= 'not';
+  and       	    = 'and';
+  or        	    = 'or';
 
 
     // Loops
   while				= 'while';
-  do					= 'do';
+  do				= 'do';
 
     // Escape Sequences
   nl_e        		= '\n';
-  tab_e           = '\t';
-  cr_e            = '\r';
-  null_term_e     = '\0';
-  backslash_e     = '\\';
-  apostrophe_e    = ''';
-  quotes_e        = '\"';
-  hexa_e          = '\x' hex_digit+;
+  tab_e             = '\t';
+  cr_e              = '\r';
+  null_term_e       = '\0';
+  backslash_e       = '\\';
+  apostrophe_e      = ''';
+  quotes_e          = '\"';
+  hexa_e            = '\x' hex_digit+;
 
   // Variable declaration
-  var 			= 'var';
+  var 			    = 'var';
   as 				= ':';  // Shows the variable's type (int/int[], char/char[])
 
   // Function
-  fun     	    = 'fun';
+  fun     	        = 'fun';
   nothing			= 'nothing';    // void return
   ref				= 'ref';        // pass by reference
   return			= 'return';
 
   // Special symbols
-  open_par		= '(';
-  close_par		= ')';
+  open_par		    = '(';
+  close_par		    = ')';
   open_cbrack		= '{';
-  close_cbrack	= '}';
+  close_cbrack	    = '}';
   open_brack	    = '[';
-  close_brack 	= ']';
-  comma           = ',';
-  oc_brack    = '[' ']';
+  close_brack 	    = ']';
+  comma             = ',';
+  oc_brack          = '[' ']';
 
 
   // Separator
-  separator       = ';';
+  separator         = ';';
 
 
-  number = sign? digit+;
+  number = digit+;
 
   // Ignored tokens
-  blank	        = (' ' | 13 | 10 | tab);
-  comment         = line_com;
-  mult_comment  = mul_com;
+  blank	            = (' ' | 13 | 10 | tab);
+  comment           = line_com;
+  mult_comment      = mul_com;
 
-  operation       = plus | minus | times | div | mod;
+  operation         = plus | minus | times | div | mod;
 
-  comp_operator   = equal | ge | gt | le | lt | dif;
+  comp_operator     = equal | ge | gt | le | lt | dif;
 
 // Identifier
-  id              = id;
-  char_const      = ''' [all - '''] ''';
-  string_const    = '"' [all - '"']* '"';
+  id                = id;
+  char_const        = ''' [all - '''] ''';
+  string_const      = '"' [all - '"']* '"';
 
-  num_or_id       = num_or_id;
+  num_or_id         = num_or_id;
 
 // ______________________________________________________________________________________________________________
 Ignored Tokens
@@ -257,6 +255,7 @@ Productions
                       | {l_value} l_val
                       | {char_const} char_const
                       | {number} number
+                      | {signed} sign number
                       ;
 
 // Conditionals

@@ -39,7 +39,7 @@ Helpers
 
   gt	            = '>';
   ge	            = '>=';
-  equal	          = '=';
+  equal	            = '=';
   lt	            = '<';
   le	            = '<=';
   dif	            = '#';
@@ -116,7 +116,7 @@ Tokens
   separator       = ';';
 
 
-  number = sign? digit+;
+  number = '-'? digit+;
 
   // Ignored tokens
   blank	        = (' ' | 13 | 10 | tab);

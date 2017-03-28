@@ -5,7 +5,371 @@ import graceLang.analysis.DepthFirstAdapter;
 import graceLang.node.*;
 
 public class Translation extends DepthFirstAdapter {
+
+    private int tabs = 0;
+
     @Override
+    public void caseAFuncDef(AFuncDef node) {
+        System.out.println("Function definition: {"); tabs++;
+        for (int i = 0; i < tabs; i++) {
+            System.out.print("\t");
+        }
+        System.out.println("Header: " + node.getHeader());
+        System.out.println("Local Definition: " + node.getLocalDef());
+        System.out.println("Block: " + node.getBlock());
+    }
+
+    @Override
+    public void caseAParamDef(AParamDef node) {
+        System.out.println("Parameter definitions: " + node);
+    }
+
+    @Override
+    public void caseAMoreParamDef(AMoreParamDef node) {
+        super.caseAMoreParamDef(node);
+    }
+
+    @Override
+    public void caseAMultipleParams(AMultipleParams node) {
+        System.out.println("Multiple parameters: " + node);
+    }
+
+    @Override
+    public void caseAParType(AParType node) {
+        System.out.println("Parameter type: " + node);
+    }
+
+    @Override
+    public void caseAFuncLocalDef(AFuncLocalDef node) {
+        super.caseAFuncLocalDef(node);
+    }
+
+    @Override
+    public void caseAFuncDeclLocalDef(AFuncDeclLocalDef node) {
+        super.caseAFuncDeclLocalDef(node);
+    }
+
+    @Override
+    public void caseAVarDeclLocalDef(AVarDeclLocalDef node) {
+        super.caseAVarDeclLocalDef(node);
+    }
+
+    @Override
+    public void caseABlock(ABlock node) {
+        System.out.println("Block: " + node);
+    }
+
+    @Override
+    public void caseAFuncDecl(AFuncDecl node) {
+        super.caseAFuncDecl(node);
+    }
+
+    @Override
+    public void caseAVarDecl(AVarDecl node) {
+        System.out.println("Variable declaration: " + node.getArrayInit());
+    }
+
+    @Override
+    public void caseAArrayInit(AArrayInit node) {
+        super.caseAArrayInit(node);
+    }
+
+    @Override
+    public void caseAMoreIds(AMoreIds node) {
+        super.caseAMoreIds(node);
+    }
+
+    @Override
+    public void caseADataIntDataType(ADataIntDataType node) {
+        super.caseADataIntDataType(node);
+    }
+
+    @Override
+    public void caseADataCharDataType(ADataCharDataType node) {
+        super.caseADataCharDataType(node);
+    }
+
+    @Override
+    public void caseAType(AType node) {
+
+    }
+
+    @Override
+    public void caseARetNothingRetType(ARetNothingRetType node) {
+        super.caseARetNothingRetType(node);
+    }
+
+    @Override
+    public void caseARetDataTypeRetType(ARetDataTypeRetType node) {
+        super.caseARetDataTypeRetType(node);
+    }
+
+    @Override
+    public void caseASepStatement(ASepStatement node) {
+        System.out.println("Separator in statement: " + node);
+    }
+
+    @Override
+    public void caseALValAssStatement(ALValAssStatement node) {
+        super.caseALValAssStatement(node);
+    }
+
+    @Override
+    public void caseABlockStatement(ABlockStatement node) {
+        super.caseABlockStatement(node);
+    }
+
+    @Override
+    public void caseAIfStatement(AIfStatement node) {
+        super.caseAIfStatement(node);
+    }
+
+    @Override
+    public void caseARetStStatement(ARetStStatement node) {
+        super.caseARetStStatement(node);
+    }
+
+    @Override
+    public void caseAFuncCallStatement(AFuncCallStatement node) {
+        super.caseAFuncCallStatement(node);
+    }
+
+    @Override
+    public void caseAWhileStatement(AWhileStatement node) {
+        super.caseAWhileStatement(node);
+    }
+
+    @Override
+    public void caseAWhileSt(AWhileSt node) {
+        super.caseAWhileSt(node);
+    }
+
+    @Override
+    public void caseAWhileWElse(AWhileWElse node) {
+        super.caseAWhileWElse(node);
+    }
+
+    @Override
+    public void caseAIfSt(AIfSt node) {
+        super.caseAIfSt(node);
+    }
+
+    @Override
+    public void caseAIfHeader(AIfHeader node) {
+        super.caseAIfHeader(node);
+    }
+
+    @Override
+    public void caseANoElseIfTail(ANoElseIfTail node) {
+        super.caseANoElseIfTail(node);
+    }
+
+    @Override
+    public void caseAElseIfTail(AElseIfTail node) {
+        super.caseAElseIfTail(node);
+    }
+
+    @Override
+    public void caseASepStWElse(ASepStWElse node) {
+        super.caseASepStWElse(node);
+    }
+
+    @Override
+    public void caseALValAssStWElse(ALValAssStWElse node) {
+        super.caseALValAssStWElse(node);
+    }
+
+    @Override
+    public void caseABlockStWElse(ABlockStWElse node) {
+        super.caseABlockStWElse(node);
+    }
+
+    @Override
+    public void caseARetStStWElse(ARetStStWElse node) {
+        super.caseARetStStWElse(node);
+    }
+
+    @Override
+    public void caseAFuncCallStWElse(AFuncCallStWElse node) {
+        super.caseAFuncCallStWElse(node);
+    }
+
+    @Override
+    public void caseAIfStWElse(AIfStWElse node) {
+        super.caseAIfStWElse(node);
+    }
+
+    @Override
+    public void caseAWhileStWElse(AWhileStWElse node) {
+        super.caseAWhileStWElse(node);
+    }
+
+    @Override
+    public void caseAIfElse(AIfElse node) {
+        super.caseAIfElse(node);
+    }
+
+    @Override
+    public void caseARetSt(ARetSt node) {
+        super.caseARetSt(node);
+    }
+
+    @Override
+    public void caseAFuncCall(AFuncCall node) {
+        super.caseAFuncCall(node);
+    }
+
+    @Override
+    public void caseAFuncParams(AFuncParams node) {
+        super.caseAFuncParams(node);
+    }
+
+    @Override
+    public void caseAMultFuncParams(AMultFuncParams node) {
+        super.caseAMultFuncParams(node);
+    }
+
+    @Override
+    public void caseALValWOffs(ALValWOffs node) {
+        super.caseALValWOffs(node);
+    }
+
+    @Override
+    public void caseALValIdLVal(ALValIdLVal node) {
+        super.caseALValIdLVal(node);
+    }
+
+    @Override
+    public void caseALValStrLVal(ALValStrLVal node) {
+        super.caseALValStrLVal(node);
+    }
+
+    @Override
+    public void caseALValOffsLVal(ALValOffsLVal node) {
+        super.caseALValOffsLVal(node);
+    }
+
+    @Override
+    public void caseAOffs(AOffs node) {
+        super.caseAOffs(node);
+    }
+
+    @Override
+    public void caseALValSimpleLValAssign(ALValSimpleLValAssign node) {
+        super.caseALValSimpleLValAssign(node);
+    }
+
+    @Override
+    public void caseAFuncCallExpression(AFuncCallExpression node) {
+        super.caseAFuncCallExpression(node);
+    }
+
+    @Override
+    public void caseANumericExpression(ANumericExpression node) {
+        super.caseANumericExpression(node);
+    }
+
+    @Override
+    public void caseAPlusNumericExpr(APlusNumericExpr node) {
+        super.caseAPlusNumericExpr(node);
+    }
+
+    @Override
+    public void caseAMinusNumericExpr(AMinusNumericExpr node) {
+        super.caseAMinusNumericExpr(node);
+    }
+
+    @Override
+    public void caseATermNumericExpr(ATermNumericExpr node) {
+        super.caseATermNumericExpr(node);
+    }
+
+    @Override
+    public void caseATimesTerm(ATimesTerm node) {
+        super.caseATimesTerm(node);
+    }
+
+    @Override
+    public void caseADivTerm(ADivTerm node) {
+        super.caseADivTerm(node);
+    }
+
+    @Override
+    public void caseAModTerm(AModTerm node) {
+        super.caseAModTerm(node);
+    }
+
+    @Override
+    public void caseAFactorTerm(AFactorTerm node) {
+        super.caseAFactorTerm(node);
+    }
+
+    @Override
+    public void caseAParExprFactor(AParExprFactor node) {
+        super.caseAParExprFactor(node);
+    }
+
+    @Override
+    public void caseALValueFactor(ALValueFactor node) {
+        super.caseALValueFactor(node);
+    }
+
+    @Override
+    public void caseACharConstFactor(ACharConstFactor node) {
+        super.caseACharConstFactor(node);
+    }
+
+    @Override
+    public void caseANumberFactor(ANumberFactor node) {
+        super.caseANumberFactor(node);
+    }
+
+    @Override
+    public void caseACondCondition(ACondCondition node) {
+        super.caseACondCondition(node);
+    }
+
+    @Override
+    public void caseAAndCondCondition(AAndCondCondition node) {
+        super.caseAAndCondCondition(node);
+    }
+
+    @Override
+    public void caseAAndCondAndCond(AAndCondAndCond node) {
+        super.caseAAndCondAndCond(node);
+    }
+
+    @Override
+    public void caseANotCondAndCond(ANotCondAndCond node) {
+        super.caseANotCondAndCond(node);
+    }
+
+    @Override
+    public void caseANotCondNotCond(ANotCondNotCond node) {
+        super.caseANotCondNotCond(node);
+    }
+
+    @Override
+    public void caseAOperatorCondNotCond(AOperatorCondNotCond node) {
+        super.caseAOperatorCondNotCond(node);
+    }
+
+    @Override
+    public void caseAOperatorCondOperatorCond(AOperatorCondOperatorCond node) {
+        super.caseAOperatorCondOperatorCond(node);
+    }
+
+    @Override
+    public void caseAParCondOperatorCond(AParCondOperatorCond node) {
+        super.caseAParCondOperatorCond(node);
+    }
+
+    @Override
+    public void caseAParCondParCond(AParCondParCond node) {
+        super.caseAParCondParCond(node);
+    }
+
+    /*@Override
     public void caseTIf(TIf node) {
         System.out.println("if : " + node);
     }
@@ -191,9 +555,9 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void caseTBlank(TBlank node) {
+    public void caseTBlank(TBlank node) {*/
         /* Ignored */
-    }
+    /*}
 
     @Override
     public void caseTComment(TComment node) {
@@ -248,7 +612,7 @@ public class Translation extends DepthFirstAdapter {
     @Override
     public void caseTInt(TInt node) {
         System.out.println("integer data type: " + node);
-    }
+    }*/
 /*
     @Override
     public void inStart(Start node) {

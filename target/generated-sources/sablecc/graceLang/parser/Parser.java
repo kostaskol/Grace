@@ -803,6 +803,8 @@ public class Parser
                         return node;
                     }
                 case ERROR:
+					System.out.println("Found: " + this.last_token);
+
                     throw new ParserException(this.last_token,
                         "[" + this.last_line + "," + this.last_pos + "] " +
                         Parser.errorMessages[Parser.errors[this.action[1]]]);
