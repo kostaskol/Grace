@@ -1,53 +1,61 @@
 Package graceLang;
 
 Helpers
-  lower           = ['a' .. 'z'];
-  upper           = ['A' .. 'Z'];
-  digit           = ['0' .. '9'];
-  all							= [0x0 .. 0xffff];
-  ascii_all       = [32 .. 127];
+  lower                 = ['a' .. 'z'];
+  upper                 = ['A' .. 'Z'];
+  digit                 = ['0' .. '9'];
+  all					= [0x0 .. 0xffff];
+  ascii_all             = [32 .. 127];
 
-  hex_num         = ['a' .. 'f'] | ['A' .. 'F'];
+  hex_num               = ['a' .. 'f'] | ['A' .. 'F'];
 
-  cr              = 13;
-  lf              = 10;
-  tab             = 9;
-  eol             = cr lf | cr | lf;
-  not_cr_lf       = [all - [cr + lf]];
-  not_com         = [all - ['$' + '$']];
-  not_quote       = [all - '''];
+  cr                    = 13;
+  lf                    = 10;
+  tab                   = 9;
+  eol                   = cr lf | cr | lf;
+  not_cr_lf             = [all - [cr + lf]];
+  not_com               = [all - ['$' + '$']];
+  not_quote             = [all - '''];
 
-  letter          = upper | lower;
-  number          = digit+;
+  letter                = upper | lower;
+  number                = digit+;
 
-  id              = letter (letter | '_' | number)*;
+  id                    = letter (letter | '_' | number)*;
 
-  let             = all;
-    hex_digit     = digit | hex_num;
-    hex           = ('0' ('x' | 'X')) hex_digit+;
+  let                   = all;
+    hex_digit           = digit | hex_num;
+    hex                 = ('0' ('x' | 'X')) hex_digit+;
 
-  ws              = (' ' | tab | eol)+;
-  mul_com        	= '$$' not_com* '$$';
-  line_com        = '$' not_cr_lf* eol*;	// We use eol* for a line comment ending because
-            // otherwise it would not work if there was a comment at the end of the file
+  ws                    = (' ' | tab | eol)+;
+  mul_com        	    = '$$' not_com* '$$';
+  // We use eol* for a line comment ending because
+  // otherwise it would not work if there was a comment at the end of the file
+  line_com              = '$' not_cr_lf* eol*;
 
-  plus						= '+';
-  minus						= '-';
-  times						= '*';
-  div							= 'div';
-  mod							= 'mod';
 
-  gt	            = '>';
-  ge	            = '>=';
-  equal	            = '=';
-  lt	            = '<';
-  le	            = '<=';
-  dif	            = '#';
+  plus				    = '+';
+  minus				    = '-';
+  times				    = '*';
+  div				    = 'div';
+  mod				    = 'mod';
 
-  sign            = plus | minus;
+  gt	                = '>';
+  ge	                = '>=';
+  equal	                = '=';
+  lt	                = '<';
+  le	                = '<=';
+  dif	                = '#';
 
-  num_or_id       = number | id;
 
+  // Escape Sequences
+  nl_e        		    = '\n';
+  tab_e                 = '\t';
+  cr_e                  = '\r';
+  null_term_e           = '\0';
+  backslash_e           = '\\';
+  apostrophe_e          = ''';
+  quotes_e              = '\"';
+  hexa_e                = '\x' hex_digit+;
 
 // ______________________________________________________________________________________________________________
 Tokens
@@ -55,84 +63,81 @@ Tokens
   plus					= '+';
   minus					= '-';
   times					= '*';
-  div						= 'div';
-  mod						= 'mod';
+  div				    = 'div';
+  mod					= 'mod';
 
   assign				= '<-';
 
 
 
-    // Data types
-  char				= 'char';
+  // Data types
+  char				    = 'char';
   int					= 'int';
 
   // Conditionals
   if					= 'if';
-  then				= 'then';
-  else				= 'else';
+  then				    = 'then';
+  else				    = 'else';
 
   // Conditions (boolean expressions)
   not					= 'not';
-  and       	= 'and';
-  or        	= 'or';
+  and       	        = 'and';
+  or        	        = 'or';
 
 
     // Loops
-  while				= 'while';
+  while				    = 'while';
   do					= 'do';
 
-    // Escape Sequences
-  nl_e        		= '\n';
-  tab_e           = '\t';
-  cr_e            = '\r';
-  null_term_e     = '\0';
-  backslash_e     = '\\';
-  apostrophe_e    = ''';
-  quotes_e        = '\"';
-  hexa_e          = '\x' hex_digit+;
-
   // Variable declaration
-  var 			= 'var';
-  as 				= ':';  // Shows the variable's type (int/int[], char/char[])
+  var 			        = 'var';
+  as 				    = ':';  // Shows the variable's type (int/int[], char/char[])
 
   // Function
-  fun     	    = 'fun';
-  nothing			= 'nothing';    // void return
-  ref				= 'ref';        // pass by reference
-  return			= 'return';
+  fun     	            = 'fun';
+  nothing			    = 'nothing';    // void return
+  ref				    = 'ref';        // pass by reference
+  return			    = 'return';
 
   // Special symbols
-  open_par		= '(';
-  close_par		= ')';
-  open_cbrack		= '{';
-  close_cbrack	= '}';
-  open_brack	    = '[';
-  close_brack 	= ']';
-  comma           = ',';
-  oc_brack    = '[' ']';
-
+  open_par		        = '(';
+  close_par		        = ')';
+  open_cbrack		    = '{';
+  close_cbrack	        = '}';
+  open_brack	        = '[';
+  close_brack 	        = ']';
+  comma                 = ',';
+  oc_brack              = '[' ']';
 
   // Separator
-  separator       = ';';
+  separator             = ';';
 
 
-  number = '-'? digit+;
+  number                = digit+;
 
   // Ignored tokens
-  blank	        = (' ' | 13 | 10 | tab);
-  comment         = line_com;
-  mult_comment  = mul_com;
+  blank	                = (' ' | 13 | 10 | tab);
+  comment               = line_com;
+  mult_comment          = mul_com;
 
-  operation       = plus | minus | times | div | mod;
+  operation             = plus | minus | times | div | mod;
 
-  comp_operator   = equal | ge | gt | le | lt | dif;
+  comp_operator         = equal | ge | gt | le | lt | dif;
 
 // Identifier
-  id              = id;
-  char_const      = ''' [all - '''] ''';
-  string_const    = '"' [all - '"']* '"';
+  id                    = id;
+  char_const            = ''' [all - '''] '''
+                            | ''' nl_e '''
+                            | ''' tab_e '''
+                            | ''' cr_e '''
+                            | ''' null_term_e '''
+                            | ''' backslash_e '''
+                            | ''' apostrophe_e '''
+                            | ''' quotes_e '''
+                            | ''' hexa_e '''
+                            ;
 
-  num_or_id       = num_or_id;
+  string_const          = '"' [all - '"']* '"';
 
 // ______________________________________________________________________________________________________________
 Ignored Tokens
@@ -143,138 +148,148 @@ Ignored Tokens
 // ______________________________________________________________________________________________________________
 Productions
   // General program production
-  program         = func_def;
+  program               = func_def;
 
   // Function definition
-  func_def        = header local_def* block;
+  func_def              = header local_def* block;
 
-  // Function definition -> 'fun' id (<parameters...>) ':' <return type>
-  header          = fun id open_par param_def* close_par as ret_type;
+  // Function definition : 'fun' id (<parameters...>) ':' <return type>
+  header                = fun [func_name]:id open_par
+                            [params]:param_def* close_par as [return_type]:ret_type;
 
   // Function parameter definitions
   // Function can have more than one type of parameters, but a semi-colon
   // can only be used if at least on parameter is declared
   // i.e. fun foo(; x : char) is forbidden
   //              ^
-  param_def       = ref? id multiple_params* as par_type more_param_def?;
-  more_param_def  = separator param_def;
-  multiple_params = comma id;
+  param_def             = [by_ref]:ref? [param_name]:id [more_ids]:multiple_ids* as
+                            [param_type]:par_type [more_params]:more_param_def?;
 
-  par_type        = data_type oc_brack?;
+  multiple_ids          = comma id;
 
-  local_def       = {func} func_def
-                      | {func_decl} func_decl
-                      | {var_decl} var_decl;
+  more_param_def        = separator [param_def]:param_def;
+
+  par_type              = data_type [array]:oc_brack?;
+
+  local_def             = {func} func_def
+                              | {func_decl} func_decl
+                              | {var_decl} var_decl;
 
   // Block
-  block           = open_cbrack statement* close_cbrack;
+  block                 = open_cbrack statement* close_cbrack;
 
   // Function declaration
-  func_decl       = header separator;
+  func_decl             = header separator;
 
   // Variable declarations
-  var_decl        = var id more_ids* as data_type array_init? separator;
-  array_init      = open_brack number close_brack;
-  more_ids        = comma id;
+  var_decl              = var [var_name]:id multiple_ids* as data_type array_init? separator;
+  array_init            = open_brack [number]:number close_brack;
 
   // Data types
-  data_type       = {data_int} int
-                      | {data_char} char;
-  type            = data_type oc_brack?;
-  ret_type        = {ret_nothing} nothing
-                      | {ret_data_type} data_type;
+  data_type             = {data_int} int
+                            | {data_char} char;
+
+  type                  = data_type oc_brack?;
+
+  ret_type              = {ret_nothing} nothing
+                            | {ret_data_type} data_type;
 
   // Statement
-  statement       = {sep} separator
-                      | {l_val_ass} l_val_assign
-                      | {block} block
-                      | {if} if_st
-                      | {ret_st} ret_st
-                      | {func_call} func_call
-                      | {while} while_st
-                      ;
+  statement             = {sep} separator
+                            | {l_val_ass} l_val_assign
+                            | {block} block
+                            | {if} if_st
+                            | {ret_st} ret_st
+                            | {func_call} func_call separator
+                            | {while} while_st
+                            ;
 
-  while_st        = while condition do statement;
+  while_st              = while condition do statement;
 
-  while_w_else    = while condition do st_w_else;
+  while_w_else          = while condition do st_w_else;
 
-  if_st           = if_header if_tail;
+  if_st                 = if_header if_tail;
 
-  if_header       = if condition then;
+  if_header             = if condition then;
 
-  if_tail         = {no_else} statement
-                      | {else} st_w_else else statement;
-
-
-  st_w_else       = {sep} separator
-                      | {l_val_ass} l_val_assign
-                      | {block} block
-                      | {ret_st} ret_st
-                      | {func_call} func_call
-                      | {if} if_else
-                      | {while} while_w_else
-                      ;
-
-  if_else         = if_header [inner]:st_w_else else [outer]:st_w_else;
+  if_tail               = {no_else} statement
+                            | {else} st_w_else else statement;
 
 
-  ret_st          = return expression? separator;
+  st_w_else             = {sep} separator
+                            | {l_val_ass} l_val_assign
+                            | {block} block
+                            | {ret_st} ret_st
+                            | {func_call} func_call separator
+                            | {if} if_else
+                            | {while} while_w_else
+                            ;
 
-  func_call       = id open_par func_params? close_par separator;
-
-  func_params     = expression mult_func_params*;
-
-  mult_func_params= comma expression;
-
-  l_val_w_offs    = id offs;
-
-  l_val           = {l_val_id} id
-                      | {l_val_str} string_const
-                      | {l_val_offs} l_val open_brack expression close_brack
-                      ;
+  if_else               = if_header [inner]:st_w_else else [outer]:st_w_else;
 
 
-  offs            = open_brack expression close_brack;
+  ret_st                = return expression? separator;
 
-  l_val_assign    = {l_val_simple} l_val assign expression separator;
+  func_call             = id open_par func_params? close_par;
 
-  expression      = {func_call} func_call
-                      | {numeric} numeric_expr
-                      ;
+  func_params           = expression mult_func_params*;
 
-  numeric_expr    = {plus} numeric_expr plus term
-                      | {minus} numeric_expr minus term
-                      | {term} term
-                      ;
+  mult_func_params      = comma expression;
 
-  term            = {times} term times factor
-                      | {div} term div factor
-                      | {mod} term mod factor
-                      | {factor} factor
-                      ;
+  l_val_w_offs          = id offs;
 
-  factor          =  {par_expr} open_par numeric_expr close_par
-                      | {l_value} l_val
-                      | {char_const} char_const
-                      | {number} number
-                      ;
+  l_val                 = {l_val_id} id
+                            | {l_val_str} string_const
+                            | {l_val_offs} l_val open_brack expression close_brack
+                            ;
+
+
+  offs                  = open_brack expression close_brack;
+
+  l_val_assign          = [left_value]:l_val assign expression separator;
+
+  expression            = {func_call} func_call
+                            | {numeric} numeric_expr
+                            ;
+
+  numeric_expr          = {add} [left]:numeric_expr plus [right]:term
+                            | {sub} [left]:numeric_expr minus [right]:term
+                            | {term} term
+                            ;
+
+  term                  = {times} [left]:term times [right]:factor
+                            | {div} [left]:term div [right]:factor
+                            | {mod} [left]:term mod [right]:factor
+                            | {factor} factor
+                            ;
+
+  factor                =  {par_expr} open_par numeric_expr close_par
+                            | {l_value} l_val
+                            | {char_const} char_const
+                            | {number} number
+                            | {signed} signed_number
+                            ;
+
+  signed_number         = {positive} plus number
+                            | {negative} minus number
+                            ;
+
 
 // Conditionals
-  condition       = {cond} condition or and_cond
-                      | {and_cond} and_cond
-                      ;
+  condition             = {or_cond} [left]:condition or [right]:and_cond
+                            | {and_cond} and_cond
+                            ;
 
-  and_cond        = {and_cond} and_cond and not_cond
-                      | {not_cond} not_cond
-                      ;
+  and_cond              = {and_cond} [left]:and_cond and [right]:not_cond
+                            | {not_cond} not_cond
+                            ;
 
-  not_cond        = {not_cond} not operator_cond
-                      | {operator_cond} operator_cond
-                      ;
+  not_cond              = {not_cond} not [operand]:operator_cond
+                            | {operator_cond} operator_cond
+                            ;
 
-  operator_cond   = {operator_cond} [left]:expression comp_operator [right]:expression
-                      | {par_cond} par_cond
-                      ;
+  operator_cond         = {operator_cond} [left]:expression comp_operator [right]:expression
+                            | {par_cond} par_cond
+                            ;
 
-  par_cond        = {par_cond} open_par condition close_par
-                      ;
+  par_cond              = {par_cond} open_par condition close_par;

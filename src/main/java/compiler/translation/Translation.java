@@ -8,1160 +8,267 @@ public class Translation extends DepthFirstAdapter {
 
     private int tabs = 0;
 
-    @Override
-    public void caseAFuncDef(AFuncDef node) {
-        System.out.println("Function definition: {"); tabs++;
-        for (int i = 0; i < tabs; i++) {
-            System.out.print("\t");
+    private void tabify() {
+        for (int i = 0; i < this.tabs; i++) {
+            System.out.print("   ");
         }
-        System.out.println("Header: " + node.getHeader());
-        System.out.println("Local Definition: " + node.getLocalDef());
-        System.out.println("Block: " + node.getBlock());
     }
 
-    @Override
-    public void caseAParamDef(AParamDef node) {
-        System.out.println("Parameter definitions: " + node);
-    }
-
-    @Override
-    public void caseAMoreParamDef(AMoreParamDef node) {
-        super.caseAMoreParamDef(node);
-    }
-
-    @Override
-    public void caseAMultipleParams(AMultipleParams node) {
-        System.out.println("Multiple parameters: " + node);
-    }
-
-    @Override
-    public void caseAParType(AParType node) {
-        System.out.println("Parameter type: " + node);
-    }
-
-    @Override
-    public void caseAFuncLocalDef(AFuncLocalDef node) {
-        super.caseAFuncLocalDef(node);
-    }
-
-    @Override
-    public void caseAFuncDeclLocalDef(AFuncDeclLocalDef node) {
-        super.caseAFuncDeclLocalDef(node);
-    }
-
-    @Override
-    public void caseAVarDeclLocalDef(AVarDeclLocalDef node) {
-        super.caseAVarDeclLocalDef(node);
-    }
-
-    @Override
-    public void caseABlock(ABlock node) {
-        System.out.println("Block: " + node);
-    }
-
-    @Override
-    public void caseAFuncDecl(AFuncDecl node) {
-        super.caseAFuncDecl(node);
-    }
-
-    @Override
-    public void caseAVarDecl(AVarDecl node) {
-        System.out.println("Variable declaration: " + node.getArrayInit());
-    }
-
-    @Override
-    public void caseAArrayInit(AArrayInit node) {
-        super.caseAArrayInit(node);
-    }
-
-    @Override
-    public void caseAMoreIds(AMoreIds node) {
-        super.caseAMoreIds(node);
-    }
-
-    @Override
-    public void caseADataIntDataType(ADataIntDataType node) {
-        super.caseADataIntDataType(node);
-    }
-
-    @Override
-    public void caseADataCharDataType(ADataCharDataType node) {
-        super.caseADataCharDataType(node);
-    }
-
-    @Override
-    public void caseAType(AType node) {
-
-    }
-
-    @Override
-    public void caseARetNothingRetType(ARetNothingRetType node) {
-        super.caseARetNothingRetType(node);
-    }
-
-    @Override
-    public void caseARetDataTypeRetType(ARetDataTypeRetType node) {
-        super.caseARetDataTypeRetType(node);
-    }
-
-    @Override
-    public void caseASepStatement(ASepStatement node) {
-        System.out.println("Separator in statement: " + node);
-    }
-
-    @Override
-    public void caseALValAssStatement(ALValAssStatement node) {
-        super.caseALValAssStatement(node);
-    }
-
-    @Override
-    public void caseABlockStatement(ABlockStatement node) {
-        super.caseABlockStatement(node);
-    }
-
-    @Override
-    public void caseAIfStatement(AIfStatement node) {
-        super.caseAIfStatement(node);
-    }
-
-    @Override
-    public void caseARetStStatement(ARetStStatement node) {
-        super.caseARetStStatement(node);
-    }
-
-    @Override
-    public void caseAFuncCallStatement(AFuncCallStatement node) {
-        super.caseAFuncCallStatement(node);
-    }
-
-    @Override
-    public void caseAWhileStatement(AWhileStatement node) {
-        super.caseAWhileStatement(node);
-    }
-
-    @Override
-    public void caseAWhileSt(AWhileSt node) {
-        super.caseAWhileSt(node);
-    }
-
-    @Override
-    public void caseAWhileWElse(AWhileWElse node) {
-        super.caseAWhileWElse(node);
-    }
-
-    @Override
-    public void caseAIfSt(AIfSt node) {
-        super.caseAIfSt(node);
-    }
-
-    @Override
-    public void caseAIfHeader(AIfHeader node) {
-        super.caseAIfHeader(node);
-    }
-
-    @Override
-    public void caseANoElseIfTail(ANoElseIfTail node) {
-        super.caseANoElseIfTail(node);
-    }
-
-    @Override
-    public void caseAElseIfTail(AElseIfTail node) {
-        super.caseAElseIfTail(node);
-    }
-
-    @Override
-    public void caseASepStWElse(ASepStWElse node) {
-        super.caseASepStWElse(node);
-    }
-
-    @Override
-    public void caseALValAssStWElse(ALValAssStWElse node) {
-        super.caseALValAssStWElse(node);
-    }
-
-    @Override
-    public void caseABlockStWElse(ABlockStWElse node) {
-        super.caseABlockStWElse(node);
-    }
-
-    @Override
-    public void caseARetStStWElse(ARetStStWElse node) {
-        super.caseARetStStWElse(node);
-    }
-
-    @Override
-    public void caseAFuncCallStWElse(AFuncCallStWElse node) {
-        super.caseAFuncCallStWElse(node);
-    }
-
-    @Override
-    public void caseAIfStWElse(AIfStWElse node) {
-        super.caseAIfStWElse(node);
-    }
-
-    @Override
-    public void caseAWhileStWElse(AWhileStWElse node) {
-        super.caseAWhileStWElse(node);
-    }
-
-    @Override
-    public void caseAIfElse(AIfElse node) {
-        super.caseAIfElse(node);
-    }
-
-    @Override
-    public void caseARetSt(ARetSt node) {
-        super.caseARetSt(node);
-    }
-
-    @Override
-    public void caseAFuncCall(AFuncCall node) {
-        super.caseAFuncCall(node);
-    }
-
-    @Override
-    public void caseAFuncParams(AFuncParams node) {
-        super.caseAFuncParams(node);
-    }
-
-    @Override
-    public void caseAMultFuncParams(AMultFuncParams node) {
-        super.caseAMultFuncParams(node);
-    }
-
-    @Override
-    public void caseALValWOffs(ALValWOffs node) {
-        super.caseALValWOffs(node);
-    }
-
-    @Override
-    public void caseALValIdLVal(ALValIdLVal node) {
-        super.caseALValIdLVal(node);
-    }
-
-    @Override
-    public void caseALValStrLVal(ALValStrLVal node) {
-        super.caseALValStrLVal(node);
-    }
-
-    @Override
-    public void caseALValOffsLVal(ALValOffsLVal node) {
-        super.caseALValOffsLVal(node);
-    }
-
-    @Override
-    public void caseAOffs(AOffs node) {
-        super.caseAOffs(node);
-    }
-
-    @Override
-    public void caseALValSimpleLValAssign(ALValSimpleLValAssign node) {
-        super.caseALValSimpleLValAssign(node);
-    }
-
-    @Override
-    public void caseAFuncCallExpression(AFuncCallExpression node) {
-        super.caseAFuncCallExpression(node);
-    }
-
-    @Override
-    public void caseANumericExpression(ANumericExpression node) {
-        super.caseANumericExpression(node);
-    }
-
-    @Override
-    public void caseAPlusNumericExpr(APlusNumericExpr node) {
-        super.caseAPlusNumericExpr(node);
-    }
-
-    @Override
-    public void caseAMinusNumericExpr(AMinusNumericExpr node) {
-        super.caseAMinusNumericExpr(node);
-    }
-
-    @Override
-    public void caseATermNumericExpr(ATermNumericExpr node) {
-        super.caseATermNumericExpr(node);
-    }
-
-    @Override
-    public void caseATimesTerm(ATimesTerm node) {
-        super.caseATimesTerm(node);
-    }
-
-    @Override
-    public void caseADivTerm(ADivTerm node) {
-        super.caseADivTerm(node);
-    }
-
-    @Override
-    public void caseAModTerm(AModTerm node) {
-        super.caseAModTerm(node);
-    }
-
-    @Override
-    public void caseAFactorTerm(AFactorTerm node) {
-        super.caseAFactorTerm(node);
-    }
-
-    @Override
-    public void caseAParExprFactor(AParExprFactor node) {
-        super.caseAParExprFactor(node);
-    }
-
-    @Override
-    public void caseALValueFactor(ALValueFactor node) {
-        super.caseALValueFactor(node);
-    }
-
-    @Override
-    public void caseACharConstFactor(ACharConstFactor node) {
-        super.caseACharConstFactor(node);
-    }
-
-    @Override
-    public void caseANumberFactor(ANumberFactor node) {
-        super.caseANumberFactor(node);
-    }
-
-    @Override
-    public void caseACondCondition(ACondCondition node) {
-        super.caseACondCondition(node);
-    }
-
-    @Override
-    public void caseAAndCondCondition(AAndCondCondition node) {
-        super.caseAAndCondCondition(node);
-    }
-
-    @Override
-    public void caseAAndCondAndCond(AAndCondAndCond node) {
-        super.caseAAndCondAndCond(node);
-    }
-
-    @Override
-    public void caseANotCondAndCond(ANotCondAndCond node) {
-        super.caseANotCondAndCond(node);
-    }
-
-    @Override
-    public void caseANotCondNotCond(ANotCondNotCond node) {
-        super.caseANotCondNotCond(node);
-    }
-
-    @Override
-    public void caseAOperatorCondNotCond(AOperatorCondNotCond node) {
-        super.caseAOperatorCondNotCond(node);
-    }
-
-    @Override
-    public void caseAOperatorCondOperatorCond(AOperatorCondOperatorCond node) {
-        super.caseAOperatorCondOperatorCond(node);
-    }
-
-    @Override
-    public void caseAParCondOperatorCond(AParCondOperatorCond node) {
-        super.caseAParCondOperatorCond(node);
-    }
-
-    @Override
-    public void caseAParCondParCond(AParCondParCond node) {
-        super.caseAParCondParCond(node);
-    }
-
-    /*@Override
-    public void caseTIf(TIf node) {
-        System.out.println("if : " + node);
-    }
-
-    @Override
-    public void caseTThen(TThen node) {
-        System.out.println("then: " + node);
-    }
-
-    @Override
-    public void caseTElse(TElse node) {
-        System.out.println("else: " + node);
-    }
-
-    @Override
-    public void caseTNot(TNot node) {
-        System.out.println("not: " + node);
-    }
-
-    @Override
-    public void caseTWhile(TWhile node) {
-        System.out.println("while : " + node);
-    }
-
-    @Override
-    public void caseTDo(TDo node) {
-        System.out.println("do: " + node);
-    }
-
-    @Override
-    public void caseTNlE(TNlE node) {
-        System.out.println("new line: " + node);
-    }
-
-    @Override
-    public void caseTTabE(TTabE node) {
-        System.out.println("tab: " + node);
-    }
-
-    @Override
-    public void caseTCrE(TCrE node) {
-        System.out.println("carriage return: " + node);
-    }
-
-    @Override
-    public void caseTNullTermE(TNullTermE node) {
-        System.out.println("null terminator: " + node);
-    }
-
-    @Override
-    public void caseTBackslashE(TBackslashE node) {
-        System.out.println("backslash: " + node);
-    }
-
-    @Override
-    public void caseTApostropheE(TApostropheE node) {
-        System.out.println("apostrophe: " + node);
-    }
-
-    @Override
-    public void caseTQuotesE(TQuotesE node) {
-        System.out.println("quotes: " + node);
-    }
-
-    @Override
-    public void caseTHexaE(THexaE node) {
-        System.out.println("hexadecimal: " + node);
-    }
-
-    @Override
-    public void caseTVar(TVar node) {
-        System.out.println("variable: " + node);
-    }
-
-    @Override
-    public void caseTAs(TAs node) {
-        System.out.println("as (type): " + node);
-    }
-
-    @Override
-    public void caseTFun(TFun node) {
-        System.out.println("fun : " + node);
-    }
-
-    @Override
-    public void caseTPlus(TPlus node) {
-        System.out.println("plus: " + node);
-    }
-
-    @Override
-    public void caseTMinus(TMinus node) {
-        System.out.println("minus: " + node);
-    }
-
-    @Override
-    public void caseTTimes(TTimes node) {
-        System.out.println("times: " + node);
-    }
-
-    @Override
-    public void caseTDiv(TDiv node) {
-        System.out.println("div: " + node);
-    }
-
-    @Override
-    public void caseTMod(TMod node) {
-        System.out.println("mod: " + node);
-    }
-
-    @Override
-    public void caseTAnd(TAnd node) {
-        System.out.println("and: " + node);
-    }
-
-    @Override
-    public void caseTOr(TOr node) {
-        System.out.println("or: " + node);
-    }
-
-    @Override
-    public void caseTCompOperator(TCompOperator node) {
-        System.out.println("comparison operator: " + node);
-    }
-
-    @Override
-    public void caseTNothing(TNothing node) {
-        System.out.println("type-nothing: " + node);
-    }
-
-    @Override
-    public void caseTRef(TRef node) {
-        System.out.println("by reference: " + node);
-    }
-
-    @Override
-    public void caseTReturn(TReturn node) {
-        System.out.println("return: " + node);
-    }
-
-    @Override
-    public void caseTOpenPar(TOpenPar node) {
-        System.out.println("open parenthesis: " + node);
-    }
-
-    @Override
-    public void caseTClosePar(TClosePar node) {
-        System.out.println("close parenthesis: " + node);
-    }
-
-    @Override
-    public void caseTOpenCbrack(TOpenCbrack node) {
-        System.out.println("open curly braces: " + node);
-    }
-
-    @Override
-    public void caseTCloseCbrack(TCloseCbrack node) {
-        System.out.println("close curly braces: " + node);
-    }
-
-    @Override
-    public void caseTOpenBrack(TOpenBrack node) {
-        System.out.println("open brackets: " + node);
-    }
-
-    @Override
-    public void caseTCloseBrack(TCloseBrack node) {
-        System.out.println("close brackets: " + node);
-    }
-
-    @Override
-    public void caseTComma(TComma node) {
-        System.out.println("comma: " + node);
-    }
-
-    @Override
-    public void caseTSeparator(TSeparator node) {
-        System.out.println("separator (semi-colon): " + node);
-    }
-
-    @Override
-    public void caseTNumber(TNumber node) {
-        System.out.println("number: " + node);
-    }
-
-    @Override
-    public void caseTBlank(TBlank node) {*/
-        /* Ignored */
-    /*}
-
-    @Override
-    public void caseTComment(TComment node) {
-        System.out.println("Comment (ignored): " + node);
-    }
-
-    @Override
-    public void caseTMultComment(TMultComment node) {
-        System.out.println("Mult comment (ignored): " + node);
-    }
-
-    @Override
-    public void caseTOperation(TOperation node) {
-        System.out.println("operation operator: " + node);
-    }
-
-    @Override
-    public void caseTId(TId node) {
-        System.out.println("id : " + node);
-    }
-
-    @Override
-    public void caseTCharConst(TCharConst node) {
-        System.out.println("character constant: " + node);
-    }
-
-    @Override
-    public void caseTStringConst(TStringConst node) {
-        System.out.println("string constant: " + node);
-    }
-
-    @Override
-    public void caseEOF(EOF node) {
-        System.out.println("EOF");
-    }
-
-    @Override
-    public void defaultCase(@SuppressWarnings("unused") Node node) {
-        super.defaultCase(node);
-    }
-
-    @Override
-    public void caseTAssign(TAssign node) {
-        System.out.println("assign: " + node);
-    }
-
-    @Override
-    public void caseTChar(TChar node) {
-        System.out.println("character data type: " + node);
-    }
-
-    @Override
-    public void caseTInt(TInt node) {
-        System.out.println("integer data type: " + node);
-    }*/
-/*
-    @Override
-    public void inStart(Start node) {
-        super.inStart(node);
-    }
-
-    @Override
-    public void outStart(Start node) {
-        super.inStart(node);
-    }
-
-    @Override
-    public void defaultIn(@SuppressWarnings("unused") Node node) {
-        super.defaultIn(node);
-    }
-
-    @Override
-    public void defaultOut(@SuppressWarnings("unused") Node node) {
-        super.defaultOut(node);
-    }
-
-    @Override
-    public void caseStart(Start node) {
-        super.caseStart(node);
-    }
-
-    @Override
-    public void inAProgram(AProgram node) {
-        super.inAProgram(node);
-    }
-
-    @Override
-    public void outAProgram(AProgram node) {
-        super.outAProgram(node);
-    }
-
-    @Override
-    public void caseAProgram(AProgram node) {
-        System.out.println("Program");
+    private void print(String str) {
+        tabify();
+        System.out.println(str);
     }
 
     @Override
     public void inAFuncDef(AFuncDef node) {
-        super.inAFuncDef(node);
+        print("Function Definition:");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outAFuncDef(AFuncDef node) {
-        super.outAFuncDef(node);
-    }
-
-    @Override
-    public void caseAFuncDef(AFuncDef node) {
-        System.out.println("Function declaration");
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAHeader(AHeader node) {
-        super.inAHeader(node);
+        print("Header:");
+        print("{");
+        tabs++;
+        print("Function name: " + node.getFuncName());
+        print("Function parameters: " + node.getParams());
+        print("Return type: " + node.getReturnType());
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void outAHeader(AHeader node) {
-        super.outAHeader(node);
+    public void inAFuncDeclLocalDef(AFuncDeclLocalDef node) {
+        print("Function declaration:");
+        print("{");
+        tabs++;
+
     }
 
     @Override
-    public void caseAHeader(AHeader node) {
-        System.out.println("Header");
+    public void outAFuncDeclLocalDef(AFuncDeclLocalDef node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inAParDef(AParDef node) {
-        super.inAParDef(node);
+    public void inAVarDeclLocalDef(AVarDeclLocalDef node) {
+        print("Variables declaration:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void outAParDef(AParDef node) {
-        super.outAParDef(node);
+    public void outAVarDeclLocalDef(AVarDeclLocalDef node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void caseAParDef(AParDef node) {
-        super.caseAParDef(node);
-    }
-
-    @Override
-    public void inAMoreParDef(AMoreParDef node) {
-        super.inAMoreParDef(node);
-    }
-
-    @Override
-    public void outAMoreParDef(AMoreParDef node) {
-        super.outAMoreParDef(node);
-    }
-
-    @Override
-    public void caseAMoreParDef(AMoreParDef node) {
-        super.caseAMoreParDef(node);
-    }
-
-    @Override
-    public void inAMultipleParams(AMultipleParams node) {
-        super.inAMultipleParams(node);
-    }
-
-    @Override
-    public void outAMultipleParams(AMultipleParams node) {
-        super.outAMultipleParams(node);
-    }
-
-    @Override
-    public void caseAMultipleParams(AMultipleParams node) {
-        super.caseAMultipleParams(node);
-    }
-
-    @Override
-    public void inAParType(AParType node) {
-        super.inAParType(node);
-    }
-
-    @Override
-    public void outAParType(AParType node) {
-        super.outAParType(node);
-    }
-
-    @Override
-    public void caseAParType(AParType node) {
-        super.caseAParType(node);
-    }
-
-    @Override
-    public void inAFuncLocalDef(AFuncLocalDef node) {
-        super.inAFuncLocalDef(node);
-    }
-
-    @Override
-    public void outAFuncLocalDef(AFuncLocalDef node) {
-        super.outAFuncLocalDef(node);
-    }
-
-    @Override
-    public void caseAFuncLocalDef(AFuncLocalDef node) {
-        super.caseAFuncLocalDef(node);
-    }
-
-    @Override
-    public void inAFuncDecLocalDef(AFuncDecLocalDef node) {
-        super.inAFuncDecLocalDef(node);
-    }
-
-    @Override
-    public void outAFuncDecLocalDef(AFuncDecLocalDef node) {
-        super.outAFuncDecLocalDef(node);
-    }
-
-    @Override
-    public void caseAFuncDecLocalDef(AFuncDecLocalDef node) {
-        super.caseAFuncDecLocalDef(node);
-    }
-
-    @Override
-    public void inAVarDefLocalDef(AVarDefLocalDef node) {
-        super.inAVarDefLocalDef(node);
-    }
-
-    @Override
-    public void outAVarDefLocalDef(AVarDefLocalDef node) {
-        super.outAVarDefLocalDef(node);
-    }
-
-    @Override
-    public void caseAVarDefLocalDef(AVarDefLocalDef node) {
-        super.caseAVarDefLocalDef(node);
+    public void inAVarDecl(AVarDecl node) {
+        print("Variable id: " + node.getVarName());
+        if (!node.getMultipleIds().isEmpty()) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < node.getMultipleIds().size(); i++) {
+                builder.append(node.getMultipleIds().get(i));
+            }
+            String[] ids = builder.toString().split(",");
+            builder = new StringBuilder();
+            for (String s : ids) {
+                builder.append(s);
+            }
+            print("Multiple ids: " + builder);
+        }
+        if (node.getArrayInit() != null) {
+            print("Type (array): " + node.getDataType() + "[]");
+            print("Array size: " + node.getArrayInit());
+        } else {
+            print("Type: " + node.getDataType());
+        }
     }
 
     @Override
     public void inABlock(ABlock node) {
-        super.inABlock(node);
+        print("Block:");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outABlock(ABlock node) {
-        super.outABlock(node);
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void caseABlock(ABlock node) {
-        super.caseABlock(node);
+    public void inALValAssStatement(ALValAssStatement node) {
+        print("Left value assignment: " + node.getLValAssign());
     }
 
     @Override
-    public void inAFuncDec(AFuncDec node) {
-        super.inAFuncDec(node);
-    }
-
-    @Override
-    public void outAFuncDec(AFuncDec node) {
-        super.outAFuncDec(node);
-    }
-
-    @Override
-    public void caseAFuncDec(AFuncDec node) {
-        super.caseAFuncDec(node);
-    }
-
-    @Override
-    public void inAVarDef(AVarDef node) {
-        super.inAVarDef(node);
-    }
-
-    @Override
-    public void outAVarDef(AVarDef node) {
-        super.outAVarDef(node);
-    }
-
-    @Override
-    public void caseAVarDef(AVarDef node) {
-        super.caseAVarDef(node);
-    }
-
-    @Override
-    public void inAMoreIds(AMoreIds node) {
-        super.inAMoreIds(node);
-    }
-
-    @Override
-    public void outAMoreIds(AMoreIds node) {
-        super.outAMoreIds(node);
-    }
-
-    @Override
-    public void caseAMoreIds(AMoreIds node) {
-        super.caseAMoreIds(node);
-    }
-
-    @Override
-    public void inADataIntDataType(ADataIntDataType node) {
-        super.inADataIntDataType(node);
-    }
-
-    @Override
-    public void outADataIntDataType(ADataIntDataType node) {
-        super.outADataIntDataType(node);
-    }
-
-    @Override
-    public void caseADataIntDataType(ADataIntDataType node) {
-        super.caseADataIntDataType(node);
-    }
-
-    @Override
-    public void inADataCharDataType(ADataCharDataType node) {
-        super.inADataCharDataType(node);
-    }
-
-    @Override
-    public void outADataCharDataType(ADataCharDataType node) {
-        super.outADataCharDataType(node);
-    }
-
-    @Override
-    public void caseADataCharDataType(ADataCharDataType node) {
-        super.caseADataCharDataType(node);
-    }
-
-    @Override
-    public void inAType(AType node) {
-        super.inAType(node);
-    }
-
-    @Override
-    public void outAType(AType node) {
-        super.outAType(node);
-    }
-
-    @Override
-    public void caseAType(AType node) {
-        super.caseAType(node);
-    }
-
-    @Override
-    public void inARetNothingRetType(ARetNothingRetType node) {
-        super.inARetNothingRetType(node);
-    }
-
-    @Override
-    public void outARetNothingRetType(ARetNothingRetType node) {
-        super.outARetNothingRetType(node);
-    }
-
-    @Override
-    public void caseARetNothingRetType(ARetNothingRetType node) {
-        super.caseARetNothingRetType(node);
-    }
-
-    @Override
-    public void inARetDataTypeRetType(ARetDataTypeRetType node) {
-        super.inARetDataTypeRetType(node);
-    }
-
-    @Override
-    public void outARetDataTypeRetType(ARetDataTypeRetType node) {
-        super.outARetDataTypeRetType(node);
-    }
-
-    @Override
-    public void caseARetDataTypeRetType(ARetDataTypeRetType node) {
-        super.caseARetDataTypeRetType(node);
-    }
-
-    @Override
-    public void inAIfStatement(AIfStatement node) {
-        super.inAIfStatement(node);
-    }
-
-    @Override
-    public void outAIfStatement(AIfStatement node) {
-        super.outAIfStatement(node);
-    }
-
-    @Override
-    public void caseAIfStatement(AIfStatement node) {
-        super.caseAIfStatement(node);
-    }
-
-    @Override
-    public void inAIfElseStatement(AIfElseStatement node) {
-        super.inAIfElseStatement(node);
-    }
-
-    @Override
-    public void outAIfElseStatement(AIfElseStatement node) {
-        super.outAIfElseStatement(node);
-    }
-
-    @Override
-    public void caseAIfElseStatement(AIfElseStatement node) {
-        super.caseAIfElseStatement(node);
-    }
-
-    @Override
-    public void inASepStatement(ASepStatement node) {
-        super.inASepStatement(node);
-    }
-
-    @Override
-    public void outASepStatement(ASepStatement node) {
-        super.outASepStatement(node);
-    }
-
-    @Override
-    public void caseASepStatement(ASepStatement node) {
-        super.caseASepStatement(node);
-    }
-
-    @Override
-    public void inALValAssStStatement(ALValAssStStatement node) {
-        super.inALValAssStStatement(node);
-    }
-
-    @Override
-    public void outALValAssStStatement(ALValAssStStatement node) {
-        super.outALValAssStStatement(node);
-    }
-
-    @Override
-    public void caseALValAssStStatement(ALValAssStStatement node) {
-        super.caseALValAssStStatement(node);
-    }
-
-    @Override
-    public void inAWhileStStatement(AWhileStStatement node) {
-        super.inAWhileStStatement(node);
-    }
-
-    @Override
-    public void outAWhileStStatement(AWhileStStatement node) {
-        super.outAWhileStStatement(node);
-    }
-
-    @Override
-    public void caseAWhileStStatement(AWhileStStatement node) {
-        super.caseAWhileStStatement(node);
-    }
-
-    @Override
-    public void inAReturnStStatement(AReturnStStatement node) {
-        super.inAReturnStStatement(node);
-    }
-
-    @Override
-    public void outAReturnStStatement(AReturnStStatement node) {
-        super.outAReturnStStatement(node);
-    }
-
-    @Override
-    public void caseAReturnStStatement(AReturnStStatement node) {
-        super.caseAReturnStStatement(node);
-    }
-
-    @Override
-    public void inABlockStatement(ABlockStatement node) {
-        super.inABlockStatement(node);
-    }
-
-    @Override
-    public void outABlockStatement(ABlockStatement node) {
-        super.outABlockStatement(node);
-    }
-
-    @Override
-    public void caseABlockStatement(ABlockStatement node) {
-        super.caseABlockStatement(node);
+    public void inARetStStatement(ARetStStatement node) {
+        print("Return statement: " + node);
     }
 
     @Override
     public void inAFuncCallStatement(AFuncCallStatement node) {
-        super.inAFuncCallStatement(node);
+        print("Function call: ");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outAFuncCallStatement(AFuncCallStatement node) {
-        super.outAFuncCallStatement(node);
+        tabs--;
+        print("}");
+    }
+
+
+
+    @Override
+    public void inAWhileSt(AWhileSt node) {
+        print("While statement:");
+        print("{");
+        tabs++;
+        print("Condition: " + node.getCondition());
     }
 
     @Override
-    public void caseAFuncCallStatement(AFuncCallStatement node) {
-        super.caseAFuncCallStatement(node);
+    public void outAWhileSt(AWhileSt node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inAIfStatementWoEl(AIfStatementWoEl node) {
-        super.inAIfStatementWoEl(node);
+    public void inAWhileWElse(AWhileWElse node) {
+        super.inAWhileWElse(node);
     }
 
     @Override
-    public void outAIfStatementWoEl(AIfStatementWoEl node) {
-        super.outAIfStatementWoEl(node);
+    public void inAIfSt(AIfSt node) {
+        print("If statement:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void caseAIfStatementWoEl(AIfStatementWoEl node) {
-        super.caseAIfStatementWoEl(node);
+    public void outAIfSt(AIfSt node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inAElseStatementWoEl(AElseStatementWoEl node) {
-        super.inAElseStatementWoEl(node);
+    public void inAIfHeader(AIfHeader node) {
+        print("Condition: " + node.getCondition());
     }
 
     @Override
-    public void outAElseStatementWoEl(AElseStatementWoEl node) {
-        super.outAElseStatementWoEl(node);
+    public void inANoElseIfTail(ANoElseIfTail node) {
+        print("No else statement:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void caseAElseStatementWoEl(AElseStatementWoEl node) {
-        super.caseAElseStatementWoEl(node);
+    public void outANoElseIfTail(ANoElseIfTail node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inAStatementWElse(AStatementWElse node) {
-        super.inAStatementWElse(node);
+    public void inAElseIfTail(AElseIfTail node) {
+        print("Else statement:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void outAStatementWElse(AStatementWElse node) {
-        super.outAStatementWElse(node);
+    public void outAElseIfTail(AElseIfTail node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void caseAStatementWElse(AStatementWElse node) {
-        super.caseAStatementWElse(node);
+    public void inAIfStWElse(AIfStWElse node) {
+        print("If statement with else:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void inAWhileStatement(AWhileStatement node) {
-        super.inAWhileStatement(node);
+    public void outAIfStWElse(AIfStWElse node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void outAWhileStatement(AWhileStatement node) {
-        super.outAWhileStatement(node);
+    public void inAWhileStWElse(AWhileStWElse node) {
+        print("While with else:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void caseAWhileStatement(AWhileStatement node) {
-        super.caseAWhileStatement(node);
+    public void outAWhileStWElse(AWhileStWElse node) {
+        tabs--;
+        print("}");
+    }
+
+    @Override
+    public void inAIfElse(AIfElse node) {
+        print("If with else: ");
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void outAIfElse(AIfElse node) {
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inARetSt(ARetSt node) {
-        super.inARetSt(node);
+        print("Return statement: ");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outARetSt(ARetSt node) {
-        super.outARetSt(node);
-    }
-
-    @Override
-    public void caseARetSt(ARetSt node) {
-        super.caseARetSt(node);
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAFuncCall(AFuncCall node) {
-        super.inAFuncCall(node);
-    }
-
-    @Override
-    public void outAFuncCall(AFuncCall node) {
-        super.outAFuncCall(node);
-    }
-
-    @Override
-    public void caseAFuncCall(AFuncCall node) {
-        super.caseAFuncCall(node);
-    }
-
-    @Override
-    public void inAFuncParams(AFuncParams node) {
-        super.inAFuncParams(node);
-    }
-
-    @Override
-    public void outAFuncParams(AFuncParams node) {
-        super.outAFuncParams(node);
-    }
-
-    @Override
-    public void caseAFuncParams(AFuncParams node) {
-        super.caseAFuncParams(node);
+        print("id: " + node.getId());
+        if (node.getFuncParams() == null) {
+            print("Function parameters: None");
+        }
     }
 
     @Override
     public void inAMultFuncParams(AMultFuncParams node) {
-        super.inAMultFuncParams(node);
+        print("Rest of parameters: " + node.getExpression());
     }
 
     @Override
-    public void outAMultFuncParams(AMultFuncParams node) {
-        super.outAMultFuncParams(node);
+    public void inAFuncParams(AFuncParams node) {
+        print("Number of parameters: " + (node.getMultFuncParams().size() + 1));
+        print("First parameter: " + node.getExpression());
     }
 
     @Override
-    public void caseAMultFuncParams(AMultFuncParams node) {
-        super.caseAMultFuncParams(node);
+    public void inALValWOffs(ALValWOffs node) {
+        super.inALValWOffs(node);
     }
 
     @Override
@@ -1170,73 +277,18 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void outALValIdLVal(ALValIdLVal node) {
-        super.outALValIdLVal(node);
-    }
-
-    @Override
-    public void caseALValIdLVal(ALValIdLVal node) {
-        super.caseALValIdLVal(node);
-    }
-
-    @Override
     public void inALValStrLVal(ALValStrLVal node) {
         super.inALValStrLVal(node);
     }
 
     @Override
-    public void outALValStrLVal(ALValStrLVal node) {
-        super.outALValStrLVal(node);
+    public void inALValOffsLVal(ALValOffsLVal node) {
+        super.inALValOffsLVal(node);
     }
 
     @Override
-    public void caseALValStrLVal(ALValStrLVal node) {
-        super.caseALValStrLVal(node);
-    }
-
-    @Override
-    public void inALValArrLVal(ALValArrLVal node) {
-        super.inALValArrLVal(node);
-    }
-
-    @Override
-    public void outALValArrLVal(ALValArrLVal node) {
-        super.outALValArrLVal(node);
-    }
-
-    @Override
-    public void caseALValArrLVal(ALValArrLVal node) {
-        super.caseALValArrLVal(node);
-    }
-
-    @Override
-    public void inAArr(AArr node) {
-        super.inAArr(node);
-    }
-
-    @Override
-    public void outAArr(AArr node) {
-        super.outAArr(node);
-    }
-
-    @Override
-    public void caseAArr(AArr node) {
-        super.caseAArr(node);
-    }
-
-    @Override
-    public void inALValAssign(ALValAssign node) {
-        super.inALValAssign(node);
-    }
-
-    @Override
-    public void outALValAssign(ALValAssign node) {
-        super.outALValAssign(node);
-    }
-
-    @Override
-    public void caseALValAssign(ALValAssign node) {
-        super.caseALValAssign(node);
+    public void inAOffs(AOffs node) {
+        super.inAOffs(node);
     }
 
     @Override
@@ -1245,327 +297,189 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void outAFuncCallExpression(AFuncCallExpression node) {
-        super.outAFuncCallExpression(node);
-    }
-
-    @Override
-    public void caseAFuncCallExpression(AFuncCallExpression node) {
-        super.caseAFuncCallExpression(node);
-    }
-
-    @Override
     public void inANumericExpression(ANumericExpression node) {
-        super.inANumericExpression(node);
+        print("Numeric expression:");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outANumericExpression(ANumericExpression node) {
-        super.outANumericExpression(node);
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void caseANumericExpression(ANumericExpression node) {
-        super.caseANumericExpression(node);
+    public void inAAddNumericExpr(AAddNumericExpr node) {
+        print("Addition:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inAPlusNumericExpr(APlusNumericExpr node) {
-        super.inAPlusNumericExpr(node);
-    }
-
-    @Override
-    public void outAPlusNumericExpr(APlusNumericExpr node) {
-        super.outAPlusNumericExpr(node);
-    }
-
-    @Override
-    public void caseAPlusNumericExpr(APlusNumericExpr node) {
-        super.caseAPlusNumericExpr(node);
-    }
-
-    @Override
-    public void inAMinusNumericExpr(AMinusNumericExpr node) {
-        super.inAMinusNumericExpr(node);
-    }
-
-    @Override
-    public void outAMinusNumericExpr(AMinusNumericExpr node) {
-        super.outAMinusNumericExpr(node);
-    }
-
-    @Override
-    public void caseAMinusNumericExpr(AMinusNumericExpr node) {
-        super.caseAMinusNumericExpr(node);
-    }
-
-    @Override
-    public void inATermNumericExpr(ATermNumericExpr node) {
-        super.inATermNumericExpr(node);
-    }
-
-    @Override
-    public void outATermNumericExpr(ATermNumericExpr node) {
-        super.outATermNumericExpr(node);
-    }
-
-    @Override
-    public void caseATermNumericExpr(ATermNumericExpr node) {
-        super.caseATermNumericExpr(node);
+    public void inASubNumericExpr(ASubNumericExpr node) {
+        print("Subtraction:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inATimesTerm(ATimesTerm node) {
-        super.inATimesTerm(node);
-    }
-
-    @Override
-    public void outATimesTerm(ATimesTerm node) {
-        super.outATimesTerm(node);
-    }
-
-    @Override
-    public void caseATimesTerm(ATimesTerm node) {
-        super.caseATimesTerm(node);
+        print("Multiplication:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inADivTerm(ADivTerm node) {
-        super.inADivTerm(node);
-    }
-
-    @Override
-    public void outADivTerm(ADivTerm node) {
-        super.outADivTerm(node);
-    }
-
-    @Override
-    public void caseADivTerm(ADivTerm node) {
-        super.caseADivTerm(node);
+        print("Division:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAModTerm(AModTerm node) {
-        super.inAModTerm(node);
-    }
-
-    @Override
-    public void outAModTerm(AModTerm node) {
-        super.outAModTerm(node);
-    }
-
-    @Override
-    public void caseAModTerm(AModTerm node) {
-        super.caseAModTerm(node);
-    }
-
-    @Override
-    public void inAFactorTerm(AFactorTerm node) {
-        super.inAFactorTerm(node);
-    }
-
-    @Override
-    public void outAFactorTerm(AFactorTerm node) {
-        super.outAFactorTerm(node);
-    }
-
-    @Override
-    public void caseAFactorTerm(AFactorTerm node) {
-        super.caseAFactorTerm(node);
+        print("Modulus:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAParExprFactor(AParExprFactor node) {
-        super.inAParExprFactor(node);
+        print("Parenthesised expression:");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outAParExprFactor(AParExprFactor node) {
-        super.outAParExprFactor(node);
-    }
-
-    @Override
-    public void caseAParExprFactor(AParExprFactor node) {
-        super.caseAParExprFactor(node);
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inALValueFactor(ALValueFactor node) {
-        super.inALValueFactor(node);
-    }
-
-    @Override
-    public void outALValueFactor(ALValueFactor node) {
-        super.outALValueFactor(node);
-    }
-
-    @Override
-    public void caseALValueFactor(ALValueFactor node) {
-        super.caseALValueFactor(node);
+        print("Left value: ");
+        print("{");
+        tabs++;
+        print("Value: " + node.getLVal());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inACharConstFactor(ACharConstFactor node) {
-        super.inACharConstFactor(node);
-    }
-
-    @Override
-    public void outACharConstFactor(ACharConstFactor node) {
-        super.outACharConstFactor(node);
-    }
-
-    @Override
-    public void caseACharConstFactor(ACharConstFactor node) {
-        super.caseACharConstFactor(node);
+        print("Character constant: " + node.getCharConst());
     }
 
     @Override
     public void inANumberFactor(ANumberFactor node) {
-        super.inANumberFactor(node);
+        print("Number: " + node.getNumber());
     }
 
     @Override
-    public void outANumberFactor(ANumberFactor node) {
-        super.outANumberFactor(node);
+    public void inASignedFactor(ASignedFactor node) {
+        print("Signed number:");
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void caseANumberFactor(ANumberFactor node) {
-        super.caseANumberFactor(node);
+    public void outASignedFactor(ASignedFactor node) {
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void inACondCondition(ACondCondition node) {
-        super.inACondCondition(node);
+    public void inAPositiveSignedNumber(APositiveSignedNumber node) {
+        print("Sign: " + node.getPlus());
+        print("Number: " + node.getNumber());
     }
 
     @Override
-    public void outACondCondition(ACondCondition node) {
-        super.outACondCondition(node);
+    public void inANegativeSignedNumber(ANegativeSignedNumber node) {
+        print("Sign: " + node.getMinus());
+        print("Number: " + node.getNumber());
     }
 
     @Override
-    public void caseACondCondition(ACondCondition node) {
-        super.caseACondCondition(node);
-    }
-
-    @Override
-    public void inAAndCondCondition(AAndCondCondition node) {
-        super.inAAndCondCondition(node);
-    }
-
-    @Override
-    public void outAAndCondCondition(AAndCondCondition node) {
-        super.outAAndCondCondition(node);
-    }
-
-    @Override
-    public void caseAAndCondCondition(AAndCondCondition node) {
-        super.caseAAndCondCondition(node);
-    }
-
-    @Override
-    public void inAAndCondAndCond(AAndCondAndCond node) {
-        super.inAAndCondAndCond(node);
-    }
-
-    @Override
-    public void outAAndCondAndCond(AAndCondAndCond node) {
-        super.outAAndCondAndCond(node);
-    }
-
-    @Override
-    public void caseAAndCondAndCond(AAndCondAndCond node) {
-        super.caseAAndCondAndCond(node);
-    }
-
-    @Override
-    public void inANotCondAndCond(ANotCondAndCond node) {
-        super.inANotCondAndCond(node);
-    }
-
-    @Override
-    public void outANotCondAndCond(ANotCondAndCond node) {
-        super.outANotCondAndCond(node);
-    }
-
-    @Override
-    public void caseANotCondAndCond(ANotCondAndCond node) {
-        super.caseANotCondAndCond(node);
+    public void inAOrCondCondition(AOrCondCondition node) {
+        print("Or Condition:");
+        print("{");
+        tabs++;
+        print("Left operand: " + node.getLeft());
+        print("Right operand: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inANotCondNotCond(ANotCondNotCond node) {
-        super.inANotCondNotCond(node);
-    }
-
-    @Override
-    public void outANotCondNotCond(ANotCondNotCond node) {
-        super.outANotCondNotCond(node);
-    }
-
-    @Override
-    public void caseANotCondNotCond(ANotCondNotCond node) {
-        super.caseANotCondNotCond(node);
-    }
-
-    @Override
-    public void inAOperatorCondNotCond(AOperatorCondNotCond node) {
-        super.inAOperatorCondNotCond(node);
-    }
-
-    @Override
-    public void outAOperatorCondNotCond(AOperatorCondNotCond node) {
-        super.outAOperatorCondNotCond(node);
-    }
-
-    @Override
-    public void caseAOperatorCondNotCond(AOperatorCondNotCond node) {
-        super.caseAOperatorCondNotCond(node);
+        print("Not condition:");
+        print("{");
+        tabs++;
+        print("Operand: " + node.getOperand());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAOperatorCondOperatorCond(AOperatorCondOperatorCond node) {
-        super.inAOperatorCondOperatorCond(node);
-    }
-
-    @Override
-    public void outAOperatorCondOperatorCond(AOperatorCondOperatorCond node) {
-        super.outAOperatorCondOperatorCond(node);
-    }
-
-    @Override
-    public void caseAOperatorCondOperatorCond(AOperatorCondOperatorCond node) {
-        super.caseAOperatorCondOperatorCond(node);
-    }
-
-    @Override
-    public void inAParCondOperatorCond(AParCondOperatorCond node) {
-        super.inAParCondOperatorCond(node);
-    }
-
-    @Override
-    public void outAParCondOperatorCond(AParCondOperatorCond node) {
-        super.outAParCondOperatorCond(node);
-    }
-
-    @Override
-    public void caseAParCondOperatorCond(AParCondOperatorCond node) {
-        super.caseAParCondOperatorCond(node);
+        print("Operation condition:");
+        print("{");
+        tabs++;
+        print("Left: " + node.getLeft());
+        print("Operation: " + node.getCompOperator());
+        print("Right: " + node.getRight());
+        tabs--;
+        print("}");
     }
 
     @Override
     public void inAParCondParCond(AParCondParCond node) {
-        super.inAParCondParCond(node);
+        print("Parenthesised condition:");
+        print("{");
+        tabs++;
     }
 
     @Override
     public void outAParCondParCond(AParCondParCond node) {
-        super.outAParCondParCond(node);
+        tabs--;
+        print("}");
     }
 
     @Override
-    public void caseAParCondParCond(AParCondParCond node) {
-        super.caseAParCondParCond(node);
-    }*/
+    public void inAAndCondAndCond(AAndCondAndCond node) {
+        print("And:");
+        print("{");
+        tabs++;
+        print("Left: " + node.getLeft());
+        print("Right: " + node.getRight());
+        tabs--;
+        print("}");
+    }
+
+
+
+
 }
