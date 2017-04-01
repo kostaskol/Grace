@@ -267,11 +267,6 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void inALValWOffs(ALValWOffs node) {
-        super.inALValWOffs(node);
-    }
-
-    @Override
     public void inALValIdLVal(ALValIdLVal node) {
         super.inALValIdLVal(node);
     }
@@ -283,22 +278,14 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void inALValOffsLVal(ALValOffsLVal node) {
-        super.inALValOffsLVal(node);
+        print("Left Value offset: " + node.getExpression());
     }
 
-    @Override
-    public void inAOffs(AOffs node) {
-        super.inAOffs(node);
-    }
 
-    @Override
-    public void inAFuncCallExpression(AFuncCallExpression node) {
-        super.inAFuncCallExpression(node);
-    }
 
     @Override
     public void inANumericExpression(ANumericExpression node) {
-        print("Numeric expression:");
+        print("Numeric expression: " + node.getNumericExpr());
         print("{");
         tabs++;
     }
@@ -385,6 +372,13 @@ public class Translation extends DepthFirstAdapter {
         print("Value: " + node.getLVal());
         tabs--;
         print("}");
+    }
+
+
+
+    @Override
+    public void inAFuncCallFactor(AFuncCallFactor node) {
+        print("Function call: " + node.getFuncCall());
     }
 
     @Override

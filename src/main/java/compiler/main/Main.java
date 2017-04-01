@@ -13,15 +13,16 @@ public class Main {
         if (args.length == 1) try {
             io = new FileInputStream(args[0]);
         } catch (IOException ioe) {
-            ;
-        }
-        else {
+            System.out.println("Could not open supplied input file. Reading from stdin");
+        } else {
             io = System.in;
         }
 
         if (io == null) {
             io = System.in;
         }
+
+        // Create a new parser
         Parser p = new Parser(
                 new Lexer(
                         new PushbackReader(
@@ -31,11 +32,15 @@ public class Main {
         );
 
         try {
+            // Parse the tree
             Start tree = p.parse();
             tree.apply(new Translation());
             System.out.println("Done");
         } catch (Exception e) {
             e.printStackTrace();
+            System.exit(1);
         }
+
+        System.exit(0);
     }
 }

@@ -23,8 +23,8 @@ Helpers
   id                    = letter (letter | '_' | number)*;
 
   let                   = all;
-    hex_digit           = digit | hex_num;
-    hex                 = ('0' ('x' | 'X')) hex_digit+;
+  hex_digit             = digit | hex_num;
+  hex                   = ('0' ('x' | 'X')) hex_digit+;
 
   ws                    = (' ' | tab | eol)+;
   mul_com        	    = '$$' not_com* '$$';
@@ -56,6 +56,8 @@ Helpers
   apostrophe_e          = ''';
   quotes_e              = '\"';
   hexa_e                = '\x' hex_digit+;
+
+  quote                 = '"';
 
 // ______________________________________________________________________________________________________________
 Tokens
@@ -137,7 +139,8 @@ Tokens
                             | ''' hexa_e '''
                             ;
 
-  string_const          = '"' [all - '"']* '"';
+  // For some reason all - ['"' - eol] wouldn't work, so this is a workaround
+  string_const          = quote [all - ['"' + [13 + [10 + 9]]]]* quote;
 
 // ______________________________________________________________________________________________________________
 Ignored Tokens
@@ -158,10 +161,6 @@ Productions
                             [params]:param_def* close_par as [return_type]:ret_type;
 
   // Function parameter definitions
-  // Function can have more than one type of parameters, but a semi-colon
-  // can only be used if at least on parameter is declared
-  // i.e. fun foo(; x : char) is forbidden
-  //              ^
   param_def             = [by_ref]:ref? [param_name]:id [more_ids]:multiple_ids* as
                             [param_type]:par_type [more_params]:more_param_def?;
 
@@ -203,19 +202,18 @@ Productions
                             | {func_call} func_call separator
                             | {while} while_st
                             ;
-
+  // While statement
   while_st              = while condition do statement;
 
   while_w_else          = while condition do st_w_else;
 
+  // If statement
   if_st                 = if_header if_tail;
 
   if_header             = if condition then;
 
   if_tail               = {no_else} statement
                             | {else} st_w_else else statement;
-
-
   st_w_else             = {sep} separator
                             | {l_val_ass} l_val_assign
                             | {block} block
@@ -227,31 +225,28 @@ Productions
 
   if_else               = if_header [inner]:st_w_else else [outer]:st_w_else;
 
-
+  // Return statement
   ret_st                = return expression? separator;
 
+  // Function call
   func_call             = id open_par func_params? close_par;
 
   func_params           = expression mult_func_params*;
 
   mult_func_params      = comma expression;
 
-  l_val_w_offs          = id offs;
-
+  // Left value
   l_val                 = {l_val_id} id
                             | {l_val_str} string_const
                             | {l_val_offs} l_val open_brack expression close_brack
                             ;
 
-
-  offs                  = open_brack expression close_brack;
-
   l_val_assign          = [left_value]:l_val assign expression separator;
 
-  expression            = {func_call} func_call
-                            | {numeric} numeric_expr
-                            ;
+  // Expression
+  expression            = {numeric} numeric_expr;
 
+  // An expression is either
   numeric_expr          = {add} [left]:numeric_expr plus [right]:term
                             | {sub} [left]:numeric_expr minus [right]:term
                             | {term} term
@@ -268,6 +263,7 @@ Productions
                             | {char_const} char_const
                             | {number} number
                             | {signed} signed_number
+                            | {func_call} func_call
                             ;
 
   signed_number         = {positive} plus number
