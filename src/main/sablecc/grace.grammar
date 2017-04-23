@@ -247,7 +247,7 @@ Productions
                             | {block} block {-> New statement.block([block.statement])}
                             | {ret_st} ret_st {-> New statement.ret_st(ret_st.expr)}
                             | {func_call} func_call separator {-> New statement.func_call(func_call.func_call)}
-                            | {if} if_else {-> New statement.if_else(if_else.cond, [if_else.if_st], [if_else.else_st])}
+                            | {if} if_else {-> New statement.if_st(if_else.cond, [if_else.if_st], [if_else.else_st])}
                             | {while} while_w_else {-> New statement.while_st(while_w_else.cond, [while_w_else.statement])
                             ;
 
@@ -393,17 +393,11 @@ Productions
     statement           = {sep}
                             | {l_val_ass} l_val_ass
                             | {block} statement*
-                            | {if_st} if_st 
+                            | {if_st} cond statement*
                             | {ret_st} ret_st
                             | {func_call} func_call
                             | {while_st} while_st
                             ;
-
-    if_st               = if_header if_tail;
-
-    if_header           = cond;
-
-    if_tail             = statement*;
 
     ret_st              = expr;
 
