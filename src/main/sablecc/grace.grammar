@@ -151,22 +151,33 @@ Ignored Tokens
 // ______________________________________________________________________________________________________________
 Productions
   // General program production
-  program               = func_def;
+  program               = func_def{-> New program(func_def.func_dec)};
 
   // Function definition
-  func_def              = header local_def* block;
+  func_def{->func_dec}  = header local_def* block {-> New func_dec(header.head,
+                                                [local_def],
+                                                [block.statement])};
 
-  // Function definition : 'fun' id (<parameters...>) ':' <return type>
-  header                = fun [func_name]:id open_par
-                            [params]:param_def* close_par as [return_type]:ret_type;
+  // Function definition : 'fun' id '(' <parameters...> ')' ':' <return type>
+  header{->head}        = fun [func_name]:id open_par
+                            [params]:param_def* close_par as [return_type]:ret_type
+                            {-> New head(func_name, [params.dec_params], return_type)};
 
   // Function parameter definitions
-  param_def             = [by_ref]:ref? [param_name]:id [more_ids]:multiple_ids* as
-                            [param_type]:par_type [more_params]:more_param_def?;
+  param_def{->dec_params*}
+                        = param_bundle [more_params]:more_param_def?
+                            {-> [param_bundle.v_dec, more_params.v_dec]}
+                            ;
 
-  multiple_ids          = comma id;
+  param_bundle{->v_dec*}= ref? id multiple_ids* as par_type
+                            {-> [New v_dec(ref, [id, multiple_ids.id], par_type)]}
+                            ;
 
-  more_param_def        = separator [param_def]:param_def;
+  multiple_ids{->id}    = comma id {-> id};
+
+
+  more_param_def{->v_dec*}
+                        = separator [param_def]:param_def {-> [param_def.dec_params]};
 
   par_type              = data_type [array]:oc_brack?;
 
@@ -175,18 +186,22 @@ Productions
                               | {var_decl} var_decl;
 
   // Block
-  block                 = open_cbrack statement* close_cbrack;
+  block{->statement*}       = open_cbrack statement* close_cbrack {-> [statement]};
 
   // Function declaration
-  func_decl             = header separator;
+  func_decl{->func_dec} = header separator {-> header.head};
 
   // Variable declarations
-  var_decl              = var [var_name]:id multiple_ids* as data_type array_init? separator;
-  array_init            = open_brack [number]:number close_brack;
+  var_decl{->var_dec}   = var [var_name]:id multiple_ids* as data_type array_init? separator
+                            {-> New var_dec([var_name, multiple_ids], data_type.par_type, array_init.array)}
+                            ;
+
+  array_init{->array}    = open_brack [number]:number close_brack {-> number};
 
   // Data types
-  data_type             = {data_int} int
-                            | {data_char} char;
+  data_type{->par_type}  = {int} int {-> New par_type.int(int)}
+                            | {char} char {-> New par_type.char(char)}
+                            ;
 
   type                  = data_type oc_brack?;
 
@@ -194,98 +209,208 @@ Productions
                             | {ret_data_type} data_type;
 
   // Statement
-  statement             = {sep} separator
-                            | {l_val_ass} l_val_assign
-                            | {block} block
-                            | {if} if_st
-                            | {ret_st} ret_st
-                            | {func_call} func_call separator
-                            | {while} while_st
+  statement{->statement}
+                        = {sep} separator {-> New statement.sep()}
+                            | {l_val_ass} l_val_assign {-> New statement.l_val(l_val_assign)}
+                            | {block} block {-> New statement.block([block.statement)}
+                            | {if} if_st {-> New statement.if_st(if_st.if_st)}
+                            | {ret_st} ret_st {-> New statement.ret_st(ret_st)}
+                            | {func_call} func_call separator {-> New statement.func_call(func_call)}
+                            | {while} while_st {-> New statement.while(while_st)}
                             ;
   // While statement
-  while_st              = while condition do statement;
+  while_st{->while_st}  = while condition do statement
+                            {-> New while_st(condition, statement)}
+                            ;
 
-  while_w_else          = while condition do st_w_else;
+  while_w_else{->while_st}
+                        = while condition do st_w_else
+                            {-> New while_st(condition.cond, st_w_else.statement)}
+                            ;
 
   // If statement
-  if_st                 = if_header if_tail;
+  if_st{->if_st}        = if_header if_tail
+                            {-> New if_st(if_header.cond, [if_tail.statement])}
+                            ;
 
-  if_header             = if condition then;
+  if_header{->cond}     = if condition then
+                            {-> condition.cond}
+                            ;
 
-  if_tail               = {no_else} statement
-                            | {else} st_w_else else statement;
-  st_w_else             = {sep} separator
-                            | {l_val_ass} l_val_assign
-                            | {block} block
-                            | {ret_st} ret_st
-                            | {func_call} func_call separator
-                            | {if} if_else
-                            | {while} while_w_else
+  if_tail{->statement*}  = {no_else} statement {-> [statement.statement]}
+                            | {else} st_w_else else statement
+                            ;
+
+  st_w_else{->statement}
+                        = {sep} separator {-> New statement.sep()}
+                            | {l_val_ass} l_val_assign {-> New statement.l_val_ass(l_val_assign.l_v_a)}
+                            | {block} block {-> New statement.block([block.statement])}
+                            | {ret_st} ret_st {-> New statement.ret_st(ret_st.expr)}
+                            | {func_call} func_call separator {-> New statement.func_call(func_call.func_call)}
+                            | {if} if_else {-> New statement.if_else(if_else.cond, [if_else.if_st], [if_else.else_st])}
+                            | {while} while_w_else {-> New statement.while_st(while_w_else.cond, [while_w_else.statement])
                             ;
 
   if_else               = if_header [inner]:st_w_else else [outer]:st_w_else;
 
   // Return statement
-  ret_st                = return expression? separator;
+  ret_st{->expr}        = return expression? separator {-> expression.expr};
 
   // Function call
-  func_call             = id open_par func_params? close_par;
+  func_call{->func_call}= id open_par func_params? close_par
+                            {-> New func_call(id, [func_params.params])}
+                            ;
 
-  func_params           = expression mult_func_params*;
+  func_params{->func_c_params*}
+                        = expression mult_func_params*
+                            {-> [expression.expr, mult_func_params.expr]}
+                            ;
 
-  mult_func_params      = comma expression;
+  mult_func_params{->expr}
+                        = comma expression {-> expression.expr};
 
   // Left value
-  l_val                 = {l_val_id} id
-                            | {l_val_str} string_const
-                            | {l_val_offs} l_val open_brack expression close_brack
+  l_val {->l_val}        = {l_val_id} id {-> New l_val.id(id)}
+                            | {l_val_str} string_const {-> New l_val.str_c(string_const)}
+                            | {l_val_offs} l_val open_brack expression close_brack {-> New l_val.offs(l_val.l_val, expression.expr)}
                             ;
 
-  l_val_assign          = [left_value]:l_val assign expression separator;
+  l_val_assign{->l_val_ass}
+                        = [left_value]:l_val assign expression separator
+                            {-> New l_val_ass(l_val.l_val, expression.expr)}
+                            ;
 
   // Expression
-  expression            = {numeric} numeric_expr;
+  expression{->expr}    = {numeric} numeric_expr {-> numeric_expr.expr};
 
   // An expression is either
-  numeric_expr          = {add} [left]:numeric_expr plus [right]:term
-                            | {sub} [left]:numeric_expr minus [right]:term
-                            | {term} term
+  numeric_expr{->expr} = {add} [left]:numeric_expr plus [right]:term {-> New expr.add(left.expr, right.expr)}
+                            | {sub} [left]:numeric_expr minus [right]:term {-> New expr.sub(left.expr, right.expr)}
+                            | {term} term {-> term.expr}
                             ;
 
-  term                  = {times} [left]:term times [right]:factor
-                            | {div} [left]:term div [right]:factor
-                            | {mod} [left]:term mod [right]:factor
-                            | {factor} factor
+  term{->expr}         = {times} [left]:term times [right]:factor {-> New expr.mult(left.expr, right.expr)}
+                            | {div} [left]:term div [right]:factor {-> New expr.div(left.expr, right.expr)}
+                            | {mod} [left]:term mod [right]:factor {-> New expr.mod(left.expr, right.expr)}
+                            | {factor} factor {-> factor.expr}
                             ;
 
-  factor                =  {par_expr} open_par numeric_expr close_par
-                            | {l_value} l_val
-                            | {char_const} char_const
-                            | {number} number
-                            | {signed} signed_number
-                            | {func_call} func_call
+  factor{->expr}      =  {par_expr} signed_expr {-> signed_expr.expr}
+                            | {l_value} l_val {-> New expr.l_val(l_val.l_val)}
+                            | {char_const} char_const {-> New expr.char_c(New char_c.char_c(char_const))}
+                            | {signed} signed_number {-> signed_number.expr}
+                            | {func_call} func_call {-> New expr.func_call(func_call.expr)}
                             ;
 
-  signed_number         = {positive} plus number
-                            | {negative} minus number
+  signed_number{->expr}
+                      = {pos_num} plus signed_number {-> New expr.signed_num(plus, signed_number)}
+                            | {neg_num} minus signed_number {-> New expr.signed_num(minus, signed_number)}
+                            | {pos_id} plus id {-> New expr.signed_id(plus, id)}
+                            | {neg_id} minus id {-> New expr.signed_id(minus, id)}
+                            | {u_num} number {-> New expr.number(number)}
+                            ;
+
+  signed_expr{->expr} = {plus_expr} plus open_par numeric_expr close_par {-> New expr.signed_expr(plus, numeric_expr)}
+                            | {neg_expr} minus open_par numeric_expr close_par {-> New expr.signed_expr(minus, numeric_expr)}
+                            | {u_expr} open_par numeric_expr close_par {-> New expr.par_expr(numeric_expr)}
                             ;
 
 
 // Conditionals
-  condition             = {or_cond} [left]:condition or [right]:and_cond
-                            | {and_cond} and_cond
+  condition{->cond}  = {or_cond} [left]:condition or [right]:and_cond {-> New cond.or(left, right)}
+                            | {and_cond} and_cond {-> and_cond.cond}
                             ;
 
-  and_cond              = {and_cond} [left]:and_cond and [right]:not_cond
-                            | {not_cond} not_cond
+  and_cond{->cond}   = {and_cond} [left]:and_cond and [right]:not_cond {-> New cond.and(left, right)}
+                            | {not_cond} not_cond {-> not_cond.cond}
                             ;
 
-  not_cond              = {not_cond} not [operand]:operator_cond
-                            | {operator_cond} operator_cond
+  not_cond{->cond}   = {not_cond} not [operand]:operator_cond {-> New cond.not(operand)}
+                            | {operator_cond} operator_cond {-> operator_cond.cond}
                             ;
 
-  operator_cond         = {operator_cond} [left]:expression comp_operator [right]:expression
-                            | {par_cond} par_cond
+  operator_cond{->cond}
+                     = {operator_cond} [left]:expression comp_operator [right]:expression 
+                                                  {-> New cond.comp(left, right)}
+                            | {par_cond} par_cond {-> par_cond.cond}
                             ;
 
-  par_cond              = {par_cond} open_par condition close_par;
+  par_cond{->cond}   = {par_cond} open_par condition close_par {-> condition.cond}
+                            ;
+
+  Abstract Syntax Tree
+    program             = func_dec;
+
+    func_dec            = head local_def* statement*;
+
+    local_def           = ;
+
+    head                = [func_name]:id dec_params* ret_type;
+
+    sign                = {sign} sign;
+
+    v_dec               = ref? id* par_type;
+
+    var_dec             = id* par_type array?;
+
+    array               = number;
+
+    expr                = {add} [left]:expr [right]:expr
+                            | {sub} [left]:expr [right]:expr
+                            | {mult} [left]:expr [right]:expr
+                            | {div} [left]:expr [right]:expr
+                            | {mod} [left]:expr [right]:expr
+                            | {signed_expr} sign expr
+                            | {par_expr} expr
+                            | {char_c} char_c
+                            | {func_call} func_call
+                            | {l_val} l_val
+                            | {number} number
+                            | {signed_num} sign number
+                            | {signed_id} sign id
+                            ;
+
+    char_c              = {char_c} char_const;
+
+    l_val               = {id} id
+                            | {str_c} string_const
+                            | {offs} l_val expr
+                            ;
+
+    l_val_ass           = l_val expr;
+
+    func_call           = id func_c_params*;
+
+    func_c_params       = expr*;
+
+    dec_params          = ref id* par_type;
+
+    par_type            = {char} char
+                            | {int} int;
+
+    ret_type            = ret_type;
+
+    statement           = {sep}
+                            | {l_val_ass} l_val_ass
+                            | {block} statement*
+                            | {if_st} if_st 
+                            | {ret_st} ret_st
+                            | {func_call} func_call
+                            | {while_st} while_st
+                            ;
+
+    if_st               = if_header if_tail;
+
+    if_header           = cond;
+
+    if_tail             = statement*;
+
+    ret_st              = expr;
+
+    while_st            = cond statement*;
+
+    cond                = {or} [left]:cond [right]:cond
+                            | {and} [left]:cond [right]:cond
+                            | {not} [operand]:cond
+                            | {comp} [left]:expr [right]:expr
+                            ;

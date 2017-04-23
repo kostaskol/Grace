@@ -387,13 +387,8 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void inANumberFactor(ANumberFactor node) {
-        print("Number: " + node.getNumber());
-    }
-
-    @Override
     public void inASignedFactor(ASignedFactor node) {
-        print("Signed number:");
+        print("Signed Factor:");
         print("{");
         tabs++;
     }
@@ -405,15 +400,88 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void inAPositiveSignedNumber(APositiveSignedNumber node) {
-        print("Sign: " + node.getPlus());
-        print("Number: " + node.getNumber());
+    public void inAPosNumSignedNumber(APosNumSignedNumber node) {
+        print("Positive number: +" + node.getSignedNumber());
+        print("{");
+        tabs++;
     }
 
     @Override
-    public void inANegativeSignedNumber(ANegativeSignedNumber node) {
-        print("Sign: " + node.getMinus());
-        print("Number: " + node.getNumber());
+    public void outAPosNumSignedNumber(APosNumSignedNumber node) {
+        tabs--;
+        print("}");
+    }
+
+    @Override
+    public void inANegNumSignedNumber(ANegNumSignedNumber node) {
+        print("Negative number: -" + node.getSignedNumber());
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void inAUNumSignedNumber(AUNumSignedNumber node) {
+        print("Unsigned number: " + node.getNumber());
+    }
+
+    @Override
+    public void outANegNumSignedNumber(ANegNumSignedNumber node) {
+        tabs--;
+        print("}");
+    }
+
+
+
+    @Override
+    public void inAPosIdSignedNumber(APosIdSignedNumber node) {
+        print("Positive id: +" + node.getId());
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void outAPosIdSignedNumber(APosIdSignedNumber node) {
+        tabs--;
+        print("}");
+    }
+
+    @Override
+    public void inANegIdSignedNumber(ANegIdSignedNumber node) {
+        print("Negative id: -" + node.getId());
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void outANegIdSignedNumber(ANegIdSignedNumber node) {
+        tabs--;
+        print("}");
+    }
+
+    @Override
+    public void inAPlusExprSignedExpr(APlusExprSignedExpr node) {
+        print("Positive parenthesised expression: +" + node.getNumericExpr());
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void outAPlusExprSignedExpr(APlusExprSignedExpr node) {
+        tabs--;
+        print("}");
+    }
+
+    @Override
+    public void inANegExprSignedExpr(ANegExprSignedExpr node) {
+        print("Negative parenthesised expression: -" + node.getNumericExpr());
+        print("{");
+        tabs++;
+    }
+
+    @Override
+    public void outANegExprSignedExpr(ANegExprSignedExpr node) {
+        tabs--;
+        print("}");
     }
 
     @Override
