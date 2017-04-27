@@ -1,5 +1,4 @@
 fun hello () : nothing
 {
-  puts("Hello \n
-  world!\n");
+  puts("Hello \nworld!\n");
 }
