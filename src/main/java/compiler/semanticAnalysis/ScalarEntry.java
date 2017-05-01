@@ -1,6 +1,7 @@
 package compiler.semanticAnalysis;
 
 
+import compiler.etc.Constants;
 
 public class ScalarEntry extends TableEntry {
     // Use this constructor for scalar variables
@@ -12,6 +13,7 @@ public class ScalarEntry extends TableEntry {
         this.name = name.replaceAll("\\s+", "");
         this.type = type;
         this.byRef = byRef;
+        this.entryType = Constants.TYPE_SCAL;
     }
 
     void setValue(String value) { this.value = value; }

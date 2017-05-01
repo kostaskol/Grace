@@ -189,7 +189,7 @@ Productions
                         = {func} func_def 
                                         {-> New local_def.func_def(func_def.func_def)}
                               | {func_decl} func_decl 
-                                        {-> New local_def.func_dec(func_decl.func_dec)}
+                                        {-> New local_def.func_dec(func_decl.head)}
                               | {var_decl} var_decl 
                                         {-> New local_def.var_dec([var_decl.id], var_decl.d_type, var_decl.expr)}
                               ;
@@ -198,7 +198,7 @@ Productions
   block{->statement*}   = open_cbrack statement* close_cbrack {-> [statement]};
 
   // Function declaration
-  func_decl{->func_dec} = header separator {-> New func_dec(header.head)};
+  func_decl{->head} = header separator {-> header.head};
 
   // Variable declarations
   var_decl{->id* d_type expr?}   
@@ -223,7 +223,7 @@ Productions
                             | {if} if_st
                                     {-> if_st.statement}
                             | {ret_st} ret_st
-                                    {-> New statement.ret_st(ret_st.expr)}
+                                    {-> New statement.ret_st(ret_st.return, ret_st.expr)}
                             | {func_call} func_call separator
                                     {-> New statement.func_call(func_call.id, [func_call.expr])}
                             | {while} while_st
@@ -254,7 +254,7 @@ Productions
                             | {block} block
                                     {-> New statement.block([block.statement])}
                             | {ret_st} ret_st
-                                    {-> New statement.ret_st(ret_st.expr)}
+                                    {-> New statement.ret_st(ret_st.return, ret_st.expr)}
                             | {func_call} func_call separator
                                     {-> New statement.func_call(func_call.id, [func_call.expr])}
                             | {if} if_else
@@ -270,8 +270,8 @@ Productions
                                     ;
 
   // Return statement
-  ret_st{->expr?}
-                        = return expression? separator {-> expression.expr};
+  ret_st{->return expr?}
+                        = return expression? separator {-> return expression.expr};
 
   // Function call
   func_call{->id expr*}
@@ -290,7 +290,10 @@ Productions
   // Left value
   l_val {->l_val}        = {l_val_id} id {-> New l_val.id(id)}
                             | {l_val_str} string_const {-> New l_val.str_c(string_const)}
-                            | {l_val_offs} l_val open_brack expression close_brack {-> New l_val.offs(l_val.l_val, expression.expr)}
+                            | {id_offs} id open_brack expression close_brack
+                                    {-> New l_val.id_offs(id, expression.expr)}
+                            | {str_offs} string_const open_brack expression close_brack
+                                    {-> New l_val.str_offs(string_const, expression.expr)}
                             ;
 
   l_val_assign{->l_val expr}
@@ -375,11 +378,9 @@ Productions
     func_def            = head local_def* statement*;
 
     local_def           = {func_def} func_def
-                            | {func_dec} func_dec
+                            | {func_dec} head
                             | {var_dec} id* d_type expr?
                             ;
-
-    func_dec            = head;
 
     head                = [func_name]:id p_dec* ret_type;
 
@@ -411,7 +412,8 @@ Productions
 
     l_val               = {id} id
                             | {str_c} string_const
-                            | {offs} l_val expr
+                            | {id_offs} id expr
+                            | {str_offs} string_const expr
                             ;
 
     data_type           = d_type;
@@ -421,7 +423,7 @@ Productions
                             | {block} statement*
                             | {if_no_else} cond statement
                             | {if_else} cond [if]:statement [else]:statement
-                            | {ret_st} expr?
+                            | {ret_st} return expr?
                             | {func_call} id expr*
                             | {while_st} cond statement
                             ;

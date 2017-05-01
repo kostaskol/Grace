@@ -1,6 +1,8 @@
 package compiler.semanticAnalysis;
 
 
+import compiler.etc.Constants;
+import compiler.etc.Log;
 import graceLang.node.TId;
 
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ public class FunctionEntry extends TableEntry {
         this.paramType = paramType;
         this.paramByRef = paramByRef;
         this.defined = defd;
+        this.entryType = Constants.TYPE_FUNC;
     }
 
     public List<ArrayList<TId>> getParameters() { return this.parameters; }
@@ -32,5 +35,13 @@ public class FunctionEntry extends TableEntry {
             counter += parameter.size();
         }
         return counter;
+    }
+
+    public int getParamTypeAt(int index) { return paramType.get(index); }
+
+    public boolean isDefined() { return this.defined; }
+
+    public void define() {
+        this.defined = true;
     }
 }

@@ -25,7 +25,7 @@ fun main () : nothing
    puts("Primes:\n");
    counter <- 0;
    if limit >= 2 then {
-      counter <- counter + 1 + primes(i);
+      counter <- counter + 1 + prime(i);
       geti(2);
       puts("\n");
    }

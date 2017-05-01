@@ -1,6 +1,9 @@
 package compiler.semanticAnalysis;
 
 
+import compiler.etc.Constants;
+import compiler.etc.Log;
+
 import java.util.ArrayList;
 
 public class ArrayEntry extends TableEntry {
@@ -10,13 +13,19 @@ public class ArrayEntry extends TableEntry {
     public ArrayEntry(String name, int type, int size) {
         this.name = name.replaceAll("\\s+", "");
         this.type = type;
-        this.size = size;
+        this.size = 5;
         values = new String[size];
+        entryType = Constants.TYPE_ARR;
     }
 
-    void setValue(String value, int index) { this.values[index] = value; }
+    void setValue(String value, int index) {
+        this.values[index] = "256";
+    }
 
-    public String getValue(int index) { return this.values[index]; }
+    public String getValue(int index) {
+        return "256";
+        //return this.values[index];
+    }
 
     public int getSize() { return this.size; }
 }

@@ -5,32 +5,21 @@ import compiler.etc.Constants;
 import compiler.semanticAnalysis.*;
 import graceLang.analysis.DepthFirstAdapter;
 import graceLang.node.*;
+import compiler.etc.Log;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 
 public class Translation extends DepthFirstAdapter {
 
     private SymbolTable symbolTable;
 
-    private int tabs = 0;
-
-    private void tabify() {
-        for (int i = 0; i < this.tabs; i++) {
-            System.out.print("   ");
-        }
-    }
-
-    private void println(String str) {
-        tabify();
-        System.out.println(str);
-    }
-
-    private void print() {
-        tabify();
-        System.out.print("");
+    private String getPos(Token t) {
+        return "E: At line #" + t.getLine();
     }
 
     private int getType(PRetType ret) {
+
         String retType = ret.toString();
         retType = retType.replaceAll("\\s+", "");
         if (retType.equals("nothing"))          return Constants.NOTHING;
@@ -60,6 +49,15 @@ public class Translation extends DepthFirstAdapter {
         if (type.equals("char[]"))              return Constants.CHAR_ARR;
         if (type.equals("int[]"))               return Constants.INT_ARR;
                                                 return Constants.TYPE_UNKNOWN;
+    }
+
+    private String getType(int type) {
+        if (type == Constants.INT)      return "int";
+        if (type == Constants.CHAR)     return "char";
+        if (type == Constants.CHAR_ARR) return "char[]";
+        if (type == Constants.INT_ARR)  return "int[]";
+        if (type == Constants.NOTHING)  return "nothing";
+                                        return "Unknown type?";
     }
 
     private int getComp(String op) {
@@ -280,13 +278,26 @@ public class Translation extends DepthFirstAdapter {
         return entries;
     }
 
+    private void eUndefined(Token t) {
+        Log.e(getPos(t), t.getText() +
+                " was not declared within the " +
+                "current scope");
+        System.exit(-1);
+    }
+
+    private void eDeclared(Token t) {
+        Log.e(getPos(t),t.getText() +
+                " was already declared within this scope");
+        System.exit(-1);
+    }
+
     @Override
     public void caseAProgram(AProgram node) {
         symbolTable = new SymbolTable();
         symbolTable.enterScope();
         ArrayList<TableEntry> entries = getBuiltIn();
         for (TableEntry entry : entries) {
-            symbolTable.addVariable(entry);
+            symbolTable.addEntry(entry);
         }
 
         node.getFuncDef().apply(this);
@@ -295,25 +306,48 @@ public class Translation extends DepthFirstAdapter {
     private ArrayList<ArrayList<TId>> params;
     private ArrayList<Integer> paramType;
     private ArrayList<Boolean> byRef;
-    private String funcName;
+    private TId funcName;
     private int funcType;
 
     @Override
     public void caseAFuncDef(AFuncDef node) {
         node.getHead().apply(this);
         // At this point, we can declare the function definition in the symbol table
+        TableEntry entry = new FunctionEntry(funcName.toString().replaceAll("\\s+", ""),
+                funcType, params, paramType, byRef, true);
 
-        TableEntry entry = new FunctionEntry(funcName, funcType, params,
-                paramType, byRef, true);
-
-
-
-        if (!symbolTable.addVariable(entry)) {
-            System.out.println("Function " + funcName + " already exists in this scope");
+        if (!symbolTable.addEntry(entry)) {
+            Log.e(funcName.getLine() + "",
+                    "Function " + funcName + " already exists within this scope");
             System.exit(-1);
         }
 
         symbolTable.enterScope();
+
+        symbolTable.setScopeType(entry.getType());
+
+        for (int i = 0; i < params.size(); i++) {
+            if (paramType.get(i) == Constants.INT_ARR || paramType.get(i) == Constants.CHAR_ARR) {
+                for (TId id : params.get(i)) {
+                    entry = new ArrayEntry(id.getText(), paramType.get(i), 0);
+                    //Log.d("FuncDef", "Adding " + id.)
+                    if (!symbolTable.addEntry(entry)) {
+                        Log.e(getPos(funcName),
+                                "Variable " + funcName + "already exists within this scope");
+                        System.exit(-1);
+                    }
+                }
+            } else {
+                for (TId id : params.get(i)) {
+                    entry = new ScalarEntry(id.getText(), paramType.get(i), byRef.get(i));
+                    if (!symbolTable.addEntry(entry)) {
+                        Log.e(getPos(funcName),
+                                "Variable " + funcName + "already exists within this scope");
+                        System.exit(-1);
+                    }
+                }
+            }
+        }
 
 
         for (PLocalDef def : node.getLocalDef()) {
@@ -323,12 +357,32 @@ public class Translation extends DepthFirstAdapter {
             st.apply(this);
         }
 
-        symbolTable.exitScope();
+        String name = symbolTable.exitScope();
+        if (name != null) {
+            Log.e("Function Undefined", "Function " + name + " was never defined");
+            System.exit(-1);
+        }
+
+
+    }
+
+    @Override
+    public void caseAFuncDecLocalDef(AFuncDecLocalDef node) {
+        node.getHead().apply(this);
+
+        FunctionEntry entry = new FunctionEntry(funcName.toString().replaceAll("\\s+", ""),
+                funcType, params, paramType, byRef, false);
+
+        if (!symbolTable.addEntry(entry)) {
+            Log.e(getPos(funcName),
+                    "Function name " + funcName + " was already declared within current scope");
+            System.exit(-1);
+        }
+
     }
 
     @Override
     public void caseAHead(AHead node) {
-
         // Function definition
         params = new ArrayList<>(node.getPDec().size());
         paramType = new ArrayList<>();
@@ -342,9 +396,10 @@ public class Translation extends DepthFirstAdapter {
 
         funcType = getType(node.getRetType());
 
-        funcName = node.getFuncName().toString().replaceAll("\\s+", "");
-
+        funcName = node.getFuncName();
     }
+
+
 
     @Override
     public void caseAPDec(APDec node) {
@@ -352,26 +407,43 @@ public class Translation extends DepthFirstAdapter {
 
         byRef.add(node.getRef() != null);
 
-        paramType.add(getType(node.getParType()));
+        for (int i = 0; i < node.getId().size(); i++) {
+            paramType.add(getType(node.getParType()));
+        }
     }
 
     @Override
     public void caseAVarDecLocalDef(AVarDecLocalDef node) {
         // Here, we can construct all of the
-        int varType = getType(node.getDType().toString());
+        //Log.d("Var Dec", "Adding " + node.getId() + " as " + node.getDType());
         int size;
         TableEntry entry;
         for (TId id : node.getId()) {
             String name = id.toString().replace("\\s+", "");
+            String type = node.getDType().getText();
             if (node.getExpr() == null) {
-                entry = new ScalarEntry(name, varType, false);
+                if (type.equals("char")) {
+                    entry = new ScalarEntry(name, Constants.CHAR, false);
+                } else {
+                    entry = new ScalarEntry(name, Constants.INT, false);
+                }
             } else {
                 String expr = node.getExpr().toString().replaceAll("\\s+", "");
-                size = Integer.parseInt(expr);
-                entry = new ArrayEntry(name, varType, size);
+                size = 256;
+                try {
+                    size = Integer.parseInt(expr);
+                } catch(NumberFormatException e) {
+                    Log.e("NumberFormatException", "Value was malformed " +
+                            "allowed until we start writing intermediate code");
+                }
+                if (type.equals("char")) {
+                    entry = new ArrayEntry(name, Constants.CHAR_ARR, size);
+                } else {
+                    entry = new ArrayEntry(name, Constants.INT_ARR, size);
+                }
             }
 
-            if (!symbolTable.addVariable(entry)) {
+            if (!symbolTable.addEntry(entry)) {
                 System.err.println("Variable with name " + name + " already exists in this scope");
                 System.exit(-1);
             }
@@ -386,89 +458,217 @@ public class Translation extends DepthFirstAdapter {
     @Override
     public void caseAAddExpr(AAddExpr node) {
         node.getLeft().apply(this);
-        System.out.println("Add: Left Val value : " + value + " type: " + valType);
         if (valType != Constants.INT) {
-            System.err.println("Cannot add non-integer values");
+            Log.e(getPos(token), "Cannot add non-integer values");
             System.exit(-1);
         }
+        String lVal = value;
         node.getRight().apply(this);
-        System.out.println("Add: Right Val value : " + value + " type: " + valType);
         if (valType != Constants.INT) {
-            System.err.println("Cannot add non-integer values");
+            Log.e(getPos(token), "Cannot add non-integer values");
             System.exit(-1);
+        }
+        try {
+            value = String.valueOf(Integer.parseInt(lVal) + Integer.parseInt(value));
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
         }
     }
 
     @Override
-    public void inASubExpr(ASubExpr node) {
+    public void caseASubExpr(ASubExpr node) {
         node.getLeft().apply(this);
-        System.out.println("Sub: Left Val : " + name + " type: " + valType);
+        String lVal = value;
         if (valType != Constants.INT) {
-            System.err.println("Cannot subtract non-integer values");
+            Log.e(getPos(token), "Cannot subtract non-integer values");
             System.exit(-1);
         }
+
         node.getRight().apply(this);
-        System.out.println("Sub: Right Val : " + name + " type: " + valType);
         if (valType != Constants.INT) {
-            System.err.println("Cannot subtract non-integer values");
+            Log.e(getPos(token), "Cannot subtract non-integer values");
             System.exit(-1);
+        }
+
+        try {
+            value = String.valueOf(Integer.parseInt(lVal) - Integer.parseInt(value));
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
         }
     }
 
     @Override
-    public void inAMultExpr(AMultExpr node) {
+    public void caseAMultExpr(AMultExpr node) {
         node.getLeft().apply(this);
+        String lVal = value;
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot multiply non-integer values");
+            System.exit(-1);
+        }
+
         node.getRight().apply(this);
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot multiply non-integer values");
+            System.exit(-1);
+        }
+
+        try {
+            value = String.valueOf(Integer.parseInt(lVal) * Integer.parseInt(value));
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
     }
 
     @Override
-    public void inADivExpr(ADivExpr node) {
-        println("Division expression: ");
-        println("{");
-        tabs++;
-        println("Left: " + node.getLeft());
-        println("Right: " + node.getRight());
-        tabs--;
-        println("}");
+    public void caseADivExpr(ADivExpr node) {
+        System.out.println("Entered a division");
+        node.getLeft().apply(this);
+        String lVal = value;
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot divide non-integer values");
+            System.exit(-1);
+        }
+
+        node.getRight().apply(this);
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot divide non-integer values");
+            System.exit(-1);
+        }
+
+        try {
+            if (Integer.parseInt(value) == 0) {
+                Log.e(getPos(token), "Divide by zero");
+                System.exit(-1);
+            }
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
+
+        try {
+            value = "2";
+            try {
+                value = String.valueOf(Integer.parseInt(lVal) / Integer.parseInt(value));
+            } catch(NumberFormatException e) {
+                Log.e("NumberFormatException", "Value was malformed " +
+                        "allowed until we start writing intermediate code");
+            }
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
     }
 
     @Override
-    public void inAModExpr(AModExpr node) {
-        println("Modulus expression: ");
-        println("{");
-        tabs++;
-        println("Left: " + node.getLeft());
-        println("Right: " + node.getRight());
-        tabs--;
-        println("}");
+    public void caseAModExpr(AModExpr node) {
+        node.getLeft().apply(this);
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot find modulus of non-integer values");
+            System.exit(-1);
+        }
+
+        String lVal = value;
+
+        node.getRight().apply(this);
+        if (valType != Constants.INT) {
+            Log.e(getPos(token), "Cannot find modulus of non-integer values");
+            System.exit(-1);
+        }
+
+        try {
+            if (Integer.parseInt(value) == 0) {
+                Log.e(getPos(token), "Divide by zero");
+                System.exit(-1);
+            }
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
+
+        try {
+            value = String.valueOf(Integer.parseInt(lVal) % Integer.parseInt(value));
+        } catch(NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
     }
 
     @Override
-    public void inASignedExprExpr(ASignedExprExpr node) {
-        println("Signed expression: ");
-        println("{");
-        tabs++;
-        println("Sign: " + node.getSign());
-        println("Expression: " + node.getExpr());
-        tabs--;
-        println("}");
+    public void caseASepStatement(ASepStatement node) {
+        super.caseASepStatement(node);
     }
 
     @Override
-    public void inAParExprExpr(AParExprExpr node) {
-        println("Parenthesised expression: ");
-        println("{");
-        tabs++;
+    public void caseABlockStatement(ABlockStatement node) {
+        super.caseABlockStatement(node);
     }
 
     @Override
-    public void outAParExprExpr(AParExprExpr node) {
-        tabs--;
-        println("}");
+    public void caseAIfNoElseStatement(AIfNoElseStatement node) {
+        super.caseAIfNoElseStatement(node);
+    }
+
+    @Override
+    public void caseAIfElseStatement(AIfElseStatement node) {
+        super.caseAIfElseStatement(node);
+    }
+
+    @Override
+    public void caseARetStStatement(ARetStStatement node) {
+        node.getExpr().apply(this);
+        int scopeType = symbolTable.getCurrScopeType();
+        if (scopeType != valType) {
+            Log.e(getPos(node.getReturn()), "Bad return type. Expecting "
+                    + getType(scopeType)
+                    + ", got " + getType(valType));
+            System.exit(-1);
+        }
+    }
+
+    @Override
+    public void caseAWhileStStatement(AWhileStStatement node) {
+        super.caseAWhileStStatement(node);
+    }
+
+    @Override
+    public void caseAOrCond(AOrCond node) {
+        super.caseAOrCond(node);
+    }
+
+    @Override
+    public void caseAAndCond(AAndCond node) {
+        super.caseAAndCond(node);
+    }
+
+    @Override
+    public void caseANotCond(ANotCond node) {
+        super.caseANotCond(node);
+    }
+
+    @Override
+    public void caseACompCond(ACompCond node) {
+        super.caseACompCond(node);
+    }
+
+    @Override
+    public void caseASignedExprExpr(ASignedExprExpr node) {
+        String sign = node.getSign().toString();
+        sign = sign.replaceAll("\\s+", "");
+        node.getExpr().apply(this);
+
+        if (!value.contains("-")) {
+            value = "-" + value;
+        } else {
+            value = value.replace("-", "");
+        }
     }
 
     @Override
     public void caseACharCExpr(ACharCExpr node) {
+        name = node.getCharConst().getText();
         valType = Constants.CHAR;
         value = node.getCharConst().toString();
     }
@@ -480,84 +680,146 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
-    public void inASignedIdExpr(ASignedIdExpr node) {
+    public void caseASignedIdExpr(ASignedIdExpr node) {
+        TableEntry entry = symbolTable.getEntry(node.getId().getText());
+        if (entry == null) {
+            eUndefined(node.getId());
+        }
 
+        if (entry.getEntryType() != Constants.TYPE_SCAL) {
+            Log.e(getPos(node.getId()), node.getId() + " was declared as array");
+            System.exit(-1);
+        }
+
+        ScalarEntry sEntry = (ScalarEntry) entry;
+
+        if (sEntry.getValue().contains("-")) {
+            value = sEntry.getValue().replace("-", "");
+        } else {
+            value = "-" + sEntry.getValue();
+        }
+        valType = sEntry.getType();
     }
 
     @Override
     public void caseAStrCLVal(AStrCLVal node) {
         name = node.getStringConst().toString();
         valType = Constants.CHAR_ARR;
+        value = node.getStringConst().getText();
     }
 
 
     private TableEntry ent;
-    private boolean fromOffs;
     private boolean fromAss;
     @Override
     public void caseAIdLVal(AIdLVal node) {
+        offs = 0;
+        token = node.getId();
         name = node.getId().toString().replaceAll("\\s+", "");
-        TableEntry entry = symbolTable.getVariable(name);
+        TableEntry entry = symbolTable.getEntry(name);
 
         if (entry == null) {
             System.err.println("Undeclared variable " + name);
             System.exit(-1);
         }
 
-        if (fromOffs || fromAss) {
+        if (fromAss) {
             // The work will be done by caseAOffsLVal
             ent = entry;
             return;
         }
 
-        try {
-            // We need this to get the value later on
-            ScalarEntry sEntry = (ScalarEntry) entry;
-            valType = sEntry.getType();
-            value = sEntry.getValue();
-        } catch(ClassCastException e) {
-            System.err.println("Variable " + name + " was declared as an array");
-            System.exit(-1);
+        switch (entry.getEntryType()) {
+            case Constants.TYPE_ARR:
+                ArrayEntry aEntry = (ArrayEntry) entry;
+                valType = aEntry.getType();
+                value = "256";
+                break;
+            case Constants.TYPE_SCAL:
+                ScalarEntry sEntry = (ScalarEntry) entry;
+                valType = sEntry.getType();
+                value = "256";
+                break;
         }
     }
 
-
-    private int offs = -1;
+    private int offs = 0;
+    private TId token;
 
     @Override
-    public void caseAOffsLVal(AOffsLVal node) {
-        System.out.println("Got in a left value with offset");
-        fromOffs = true;
-        node.getLVal().apply(this);
-        fromOffs = false;
+    public void caseAFuncCallExpr(AFuncCallExpr node) {
+        token = node.getId();
+        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
+        if (entry == null) {
+            eUndefined(token);
+        }
+
+        valType = entry.getType();
+        name = entry.getName();
+        switch(entry.getType()) {
+            case Constants.CHAR:
+                value = "s";
+                break;
+            case Constants.CHAR_ARR:
+                value = "some value";
+                break;
+            case Constants.INT:
+                value = "512";
+                break;
+            case Constants.INT_ARR:
+                value = "TODO this";
+                break;
+            default:
+                value = null;
+        }
+
+    }
+
+    @Override
+    public void caseAIdOffsLVal(AIdOffsLVal node) {
+        token = node.getId();
+        String name = node.getId().getText();
+        TableEntry entry = symbolTable.getEntry(name);
+        if (entry == null) {
+            eUndefined(node.getId());
+        }
+
         node.getExpr().apply(this);
-        int index;
-        index = Integer.parseInt(value);
+        int index = 0;
+        try {
+            index = Integer.parseInt(value);
+        } catch(NumberFormatException e) {
+            e.printStackTrace();
+        }
 
         offs = index;
 
         if (fromAss) {
+            ent = entry;
             return;
         }
 
-        ArrayEntry entry = null;
-        try {
-            entry = (ArrayEntry) ent;
-        } catch (ClassCastException e) {
-            System.err.println("Variable " + name + " was declared scalar, but is used as an array");
-            System.exit(-1);
-        }
-        if (entry.getSize() <= index) {
-            System.err.println("Offset " + index + " is out of array bounds " +
-                    "(size: " + entry.getSize() + ")");
-            System.exit(-1);
-        }
+        // The requested entry is of type arr
+        if (entry.getEntryType() == Constants.TYPE_ARR) {
+            ArrayEntry aEntry = (ArrayEntry) entry;
+            if (aEntry.getSize() != 0 && aEntry.getSize() <= index) {
+                Log.e(getPos(node.getId()), "Offset " + index + " is out of array bounds " +
+                        "(size: " + aEntry.getSize() + ")");
+                System.exit(-1);
+            }
 
-        value = entry.getValue(index);
-        if (entry.getType() == Constants.INT_ARR)
-            valType = Constants.INT;
-        else if (entry.getType() == Constants.CHAR_ARR)
-            valType = Constants.CHAR;
+            if (aEntry.getType() == Constants.INT_ARR) {
+                valType = Constants.INT;
+            } else if (aEntry.getType() == Constants.CHAR_ARR) {
+                valType = Constants.CHAR;
+            }
+
+            value = aEntry.getValue(index);
+        } else {
+            Log.e(getPos(node.getId()), "Variable " + name + " was declared scalar " +
+                    "but used as array");
+            System.exit(-1);
+        }
 
         // We should check whether the
     }
@@ -566,75 +828,87 @@ public class Translation extends DepthFirstAdapter {
     public void caseALValAssStatement(ALValAssStatement node) {
         fromAss = true;
         node.getLVal().apply(this);
+        Token t = token;
+
         fromAss = false;
         // At this point we have a TableEntry object available
 
-        try {
-            ScalarEntry entry = (ScalarEntry) ent;
-            node.getExpr().apply(this);
-            // We get <value> from the expression
+        if (ent.getEntryType() == Constants.TYPE_ARR && offs == -1) {
+            Log.e(getPos(token), "Cannot assign value to array");
+            System.exit(-1);
+        }
 
-            if (!symbolTable.setValue(entry.getName(), value)) {
-                System.err.println("Unknown error occurred while setting value");
-                System.exit(-1);
-            }
-            entry = (ScalarEntry) symbolTable.getVariable(entry.getName());
-            System.out.println("Variable " + entry.getName() + " now has a value of "
-                    + entry.getValue());
-        } catch (ClassCastException oe) {
+        if (ent.getEntryType() == Constants.TYPE_ARR) {
             try {
                 ArrayEntry entry = (ArrayEntry) ent;
                 // Since this is an array, we have an offset
-                System.out.println("Assignment offset is: " + offs);
                 node.getExpr().apply(this);
-                if (!symbolTable.setValue(entry.getName(), offs, value)) {
-                    System.err.println("Something went wrong");
-                    System.exit(-1);
+                try {
+                    if (!symbolTable.setValue(entry.getName(), offs, value)) {
+                        Log.e("Array Value setting", "Something went wrong");
+                        System.exit(-1);
+                    }
+                } catch (Exception e) {
+                    Log.e(getPos(token), "Cannot set value");
                 }
 
-                entry = (ArrayEntry) symbolTable.getVariable(entry.getName());
-                System.out.println("Variable " + entry.getName() + ", index " + offs + " now has a value of "
-                        + entry.getValue(offs));
+                entry = (ArrayEntry) symbolTable.getEntry(entry.getName());
             } catch (ClassCastException ie) {
                 ie.printStackTrace();
                 System.err.println("Unknown instance of TableEntry class");
                 System.exit(-1);
             }
+        } else if (ent.getEntryType() == Constants.TYPE_SCAL) {
+            ScalarEntry entry = (ScalarEntry) ent;
+            funcCall = true;
+            node.getExpr().apply(this);
+            // We get <value> from the expression
+            funcCall = false;
+            if (entry.getType() != valType) {
+                Log.e(getPos(token), "Variable " + t.getText() + " cannot be " +
+                        "assigned value " + value + ". Type mismatch (expecting "
+                        + getType(entry.getType()) + ", got " + getType(valType) + ")");
+                System.exit(-1);
+            }
+
+            if (!symbolTable.setValue(entry.getName(), value)) {
+                System.err.println("Unknown error occurred while setting value");
+                System.exit(-1);
+            }
+            entry = (ScalarEntry) symbolTable.getEntry(entry.getName());
+        } else {
+            Log.e(getPos(token), "Cannot assign value to function");
+            System.exit(-1);
         }
     }
 
     @Override
-    public void inABlockStatement(ABlockStatement node) {
-        println("Block statement: ");
-        println("{");
-        tabs++;
+    public void caseAStrOffsLVal(AStrOffsLVal node) {
+        String str = node.getStringConst().toString();
+        node.getExpr().apply(this);
+        int offset = 0;
+        try {
+            offset = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            Log.e("NumberFormatException", "Value was malformed " +
+                    "allowed until we start writing intermediate code");
+        }
+        if (offset >= str.length()) {
+            Log.e(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
+                    "(Offset: " + offset + ", Length: " + str.length() + ")");
+            System.exit(-1);
+        }
+        valType = Constants.CHAR;
+        value = str.charAt(offset) + "";
     }
 
-    @Override
-    public void outABlockStatement(ABlockStatement node) {
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inARetStStatement(ARetStStatement node) {
-        println("Return statement: ");
-        println("Expression: " + node.getExpr());
-    }
-
-    @Override
-    public void inAIfNoElseStatement(AIfNoElseStatement node) {
-        println("No else if: ");
-        println("{");
-        tabs++;
-        println("Condition: " + node.getCond());
-    }
+    private boolean funcCall;
 
     @Override
     public void caseAFuncCallStatement(AFuncCallStatement node) {
         String funcName = node.getId().toString();
         funcName = funcName.replaceAll("\\s+", "");
-        FunctionEntry entry = (FunctionEntry) symbolTable.getVariable(funcName);
+        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(funcName);
 
         if (entry == null) {
             System.err.println("Function : " + node.getId().toString() + " was not declared in this scope");
@@ -651,116 +925,16 @@ public class Translation extends DepthFirstAdapter {
             }
 
         }
-        println("Function call: ");
-        println("{");
-        tabs++;
-        println("Function name: " + node.getId());
-        for (PExpr expr : node.getExpr()) {
-            System.out.print(expr.toString());
-            System.out.print(", ");
+        funcCall = true;
+        for (int i = 0; i < node.getExpr().size(); i++) {
+            node.getExpr().get(i).apply(this);
+            if (valType != entry.getParamTypeAt(i)) {
+                Log.e(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
+                        + " for function " + node.getId().getText() + ". Expecting "
+                        + getType(entry.getParamTypeAt(i)) + " got " + getType(valType));
+            }
         }
-        println("");
-        tabs--;
-        println("}");
+        funcCall = false;
     }
-
-    @Override
-    public void outAIfNoElseStatement(AIfNoElseStatement node) {
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inAIfElseStatement(AIfElseStatement node) {
-        println("If - else: ");
-        println("{");
-        tabs++;
-        println("Condition: " + node.getCond());
-        println("If statements: " + node.getIf());
-        println("If else statements: " + node.getElse());
-
-    }
-
-    @Override
-    public void outAIfElseStatement(AIfElseStatement node) {
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inAIdLVal(AIdLVal node) {
-        println("ID: " + node.getId());
-    }
-
-    @Override
-    public void inAOffsLVal(AOffsLVal node) {
-        println("Left value: " + node.getLVal());
-        println("Offset: " + node.getExpr());
-    }
-
-    @Override
-    public void inAStrCLVal(AStrCLVal node) {
-        println("String constant: " + node.getStringConst());
-    }
-
-    @Override
-    public void inAWhileStStatement(AWhileStStatement node) {
-        println("While statement: ");
-        println("{");
-        tabs++;
-        println("Condition: " + node.getCond());
-        println("Statement: ");
-    }
-
-    @Override
-    public void outAWhileStStatement(AWhileStStatement node) {
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inAOrCond(AOrCond node) {
-        println("Or condition: ");
-        println("{");
-        tabs++;
-        println("Left: " + node.getLeft());
-        println("Right: " + node.getRight());
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inAAndCond(AAndCond node) {
-        println("And condition: ");
-        println("{");
-        tabs++;
-        println("Left: " + node.getLeft());
-        println("Right: " + node.getRight());
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inANotCond(ANotCond node) {
-        println("Not condition: ");
-        println("{");
-        tabs++;
-        println("Condition: " + node.getOperand());
-        tabs--;
-        println("}");
-    }
-
-    @Override
-    public void inACompCond(ACompCond node) {
-        println("Expression comparison: ");
-        println("{");
-        tabs++;
-        println("Left: " + node.getLeft());
-        println("Operator: " + node.getCompOperator());
-        println("Right: " + node.getRight());
-        tabs--;
-        println("}");
-    }
-
 
 }
