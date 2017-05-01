@@ -1,10 +1,7 @@
-package compiler.semanticAnalysis;
+package compiler.semanticAnalysis.tableEntries;
 
 
 import compiler.etc.Constants;
-import compiler.etc.Log;
-
-import java.util.ArrayList;
 
 public class ArrayEntry extends TableEntry {
     private int size;
@@ -18,7 +15,7 @@ public class ArrayEntry extends TableEntry {
         entryType = Constants.TYPE_ARR;
     }
 
-    void setValue(String value, int index) {
+    public void setValue(String value, int index) {
         this.values[index] = "256";
     }
 

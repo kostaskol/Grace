@@ -1,8 +1,7 @@
-package compiler.semanticAnalysis;
+package compiler.semanticAnalysis.tableEntries;
 
 
 import compiler.etc.Constants;
-import compiler.etc.Log;
 import graceLang.node.TId;
 
 import java.util.ArrayList;

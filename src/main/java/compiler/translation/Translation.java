@@ -3,11 +3,14 @@ package compiler.translation;
 
 import compiler.etc.Constants;
 import compiler.semanticAnalysis.*;
+import compiler.semanticAnalysis.tableEntries.ArrayEntry;
+import compiler.semanticAnalysis.tableEntries.FunctionEntry;
+import compiler.semanticAnalysis.tableEntries.ScalarEntry;
+import compiler.semanticAnalysis.tableEntries.TableEntry;
 import graceLang.analysis.DepthFirstAdapter;
 import graceLang.node.*;
 import compiler.etc.Log;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 
 public class Translation extends DepthFirstAdapter {

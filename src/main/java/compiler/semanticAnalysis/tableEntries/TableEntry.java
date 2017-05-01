@@ -1,4 +1,4 @@
-package compiler.semanticAnalysis;
+package compiler.semanticAnalysis.tableEntries;
 
 
 abstract public class TableEntry {

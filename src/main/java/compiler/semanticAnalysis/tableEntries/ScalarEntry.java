@@ -1,4 +1,4 @@
-package compiler.semanticAnalysis;
+package compiler.semanticAnalysis.tableEntries;
 
 
 import compiler.etc.Constants;
@@ -16,7 +16,7 @@ public class ScalarEntry extends TableEntry {
         this.entryType = Constants.TYPE_SCAL;
     }
 
-    void setValue(String value) { this.value = value; }
+    public void setValue(String value) { this.value = value; }
 
     public String getValue() { return this.value; }
 

@@ -2,7 +2,10 @@ package compiler.semanticAnalysis;
 
 
 import compiler.etc.Constants;
-import compiler.etc.Log;
+import compiler.semanticAnalysis.tableEntries.ArrayEntry;
+import compiler.semanticAnalysis.tableEntries.FunctionEntry;
+import compiler.semanticAnalysis.tableEntries.ScalarEntry;
+import compiler.semanticAnalysis.tableEntries.TableEntry;
 
 import java.util.*;
 
