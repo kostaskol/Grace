@@ -191,7 +191,7 @@ Productions
                               | {func_decl} func_decl 
                                         {-> New local_def.func_dec(func_decl.head)}
                               | {var_decl} var_decl 
-                                        {-> New local_def.var_dec([var_decl.id], var_decl.d_type, var_decl.expr)}
+                                        {-> New local_def.var_dec([var_decl.id], var_decl.d_type, [var_decl.expr])}
                               ;
 
   // Block
@@ -201,9 +201,9 @@ Productions
   func_decl{->head} = header separator {-> header.head};
 
   // Variable declarations
-  var_decl{->id* d_type expr?}   
-                        = var [var_name]:id multiple_ids* as d_type array_init? separator
-                            {-> [var_name, multiple_ids.id] d_type array_init.expr}
+  var_decl{->id* d_type expr*}
+                        = var [var_name]:id multiple_ids* as d_type array_init* separator
+                            {-> [var_name, multiple_ids.id] d_type [array_init.expr]}
                             ;
 
   array_init{->expr}   = open_brack [number]:number close_brack {-> New expr.number(number)};
@@ -288,12 +288,10 @@ Productions
                         = comma expression {-> expression.expr};
 
   // Left value
-  l_val {->l_val}        = {l_val_id} id {-> New l_val.id(id)}
-                            | {l_val_str} string_const {-> New l_val.str_c(string_const)}
-                            | {id_offs} id open_brack expression close_brack
-                                    {-> New l_val.id_offs(id, expression.expr)}
-                            | {str_offs} string_const open_brack expression close_brack
-                                    {-> New l_val.str_offs(string_const, expression.expr)}
+  l_val {->l_val}        = {l_val_id} id array_init*
+                                    {-> New l_val.id(id, [array_init.expr])}
+                            | {l_val_str} string_const array_init?
+                                    {-> New l_val.str_c(string_const)}
                             ;
 
   l_val_assign{->l_val expr}
@@ -379,7 +377,7 @@ Productions
 
     local_def           = {func_def} func_def
                             | {func_dec} head
-                            | {var_dec} id* d_type expr?
+                            | {var_dec} id* d_type expr*
                             ;
 
     head                = [func_name]:id p_dec* ret_type;
@@ -410,9 +408,8 @@ Productions
                             | {signed_id} sign? id
                             ;
 
-    l_val               = {id} id
+    l_val               = {id} id expr*
                             | {str_c} string_const
-                            | {id_offs} id expr
                             | {str_offs} string_const expr
                             ;
 

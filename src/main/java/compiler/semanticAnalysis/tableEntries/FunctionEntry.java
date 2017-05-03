@@ -36,6 +36,8 @@ public class FunctionEntry extends TableEntry {
         return counter;
     }
 
+    public boolean byRef(int index) { return paramByRef.get(index); }
+
     public int getParamTypeAt(int index) { return paramType.get(index); }
 
     public boolean isDefined() { return this.defined; }

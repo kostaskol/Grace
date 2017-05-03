@@ -57,7 +57,7 @@ public class SymbolTable {
         return false;
     }
 
-    public boolean setValue(String entryName, int offset, String value) {
+    public boolean setValue(String entryName, ArrayList<String> vector, String value) {
         entryName = entryName.replaceAll("\\s+", "");
         value = value.replaceAll("\\s+", "");
 
@@ -67,7 +67,7 @@ public class SymbolTable {
             LinkedHashMap<String, TableEntry> currScope = list.get(i);
             if (currScope.get(entryName) != null) {
                 ArrayEntry entry = (ArrayEntry) currScope.get(entryName);
-                entry.setValue(value, offset);
+                entry.setValue(value, vector);
                 return true;
             }
         }

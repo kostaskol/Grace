@@ -332,7 +332,9 @@ public class Translation extends DepthFirstAdapter {
         for (int i = 0; i < params.size(); i++) {
             if (paramType.get(i) == Constants.INT_ARR || paramType.get(i) == Constants.CHAR_ARR) {
                 for (TId id : params.get(i)) {
-                    entry = new ArrayEntry(id.getText(), paramType.get(i), 0);
+                    ArrayList<String> tmp = new ArrayList<>();
+                    tmp.add("0");
+                    entry = new ArrayEntry(id.getText(), paramType.get(i), tmp);
                     //Log.d("FuncDef", "Adding " + id.)
                     if (!symbolTable.addEntry(entry)) {
                         Log.e(getPos(funcName),
@@ -406,12 +408,24 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseAPDec(APDec node) {
+        // Add the ids
         params.add(new ArrayList<>(node.getId()));
 
+        // Add byRefs
         byRef.add(node.getRef() != null);
 
+        // Add type
         for (int i = 0; i < node.getId().size(); i++) {
             paramType.add(getType(node.getParType()));
+        }
+
+        // Value passed by ref
+        if (node.getRef() == null &&
+                (getType(node.getParType()) == Constants.INT_ARR
+                || (getType(node.getParType()) == Constants.CHAR_ARR))) {
+            Log.e(getPos(node.getId().get(0)), "Array parameter(s) "
+                    + " must be passed by reference");
+            System.exit(-1);
         }
     }
 
@@ -424,25 +438,28 @@ public class Translation extends DepthFirstAdapter {
         for (TId id : node.getId()) {
             String name = id.toString().replace("\\s+", "");
             String type = node.getDType().getText();
-            if (node.getExpr() == null) {
+            if (node.getExpr().size() == 0) {
                 if (type.equals("char")) {
                     entry = new ScalarEntry(name, Constants.CHAR, false);
                 } else {
                     entry = new ScalarEntry(name, Constants.INT, false);
                 }
             } else {
+                ArrayList<String> dimens = new ArrayList<>();
+                for (int i = 0; i < node.getExpr().size(); i++) {
+                    node.getExpr().get(i).apply(this);
+                    dimens.add(value);
+                }
                 String expr = node.getExpr().toString().replaceAll("\\s+", "");
                 size = 256;
                 try {
                     size = Integer.parseInt(expr);
                 } catch(NumberFormatException e) {
-                    Log.e("NumberFormatException", "Value was malformed " +
-                            "allowed until we start writing intermediate code");
                 }
                 if (type.equals("char")) {
-                    entry = new ArrayEntry(name, Constants.CHAR_ARR, size);
+                    entry = new ArrayEntry(name, Constants.CHAR_ARR, dimens);
                 } else {
-                    entry = new ArrayEntry(name, Constants.INT_ARR, size);
+                    entry = new ArrayEntry(name, Constants.INT_ARR, dimens);
                 }
             }
 
@@ -474,8 +491,7 @@ public class Translation extends DepthFirstAdapter {
         try {
             value = String.valueOf(Integer.parseInt(lVal) + Integer.parseInt(value));
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
+
         }
     }
 
@@ -497,8 +513,7 @@ public class Translation extends DepthFirstAdapter {
         try {
             value = String.valueOf(Integer.parseInt(lVal) - Integer.parseInt(value));
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
+            ;
         }
     }
 
@@ -520,8 +535,6 @@ public class Translation extends DepthFirstAdapter {
         try {
             value = String.valueOf(Integer.parseInt(lVal) * Integer.parseInt(value));
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
     }
 
@@ -547,8 +560,6 @@ public class Translation extends DepthFirstAdapter {
                 System.exit(-1);
             }
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
 
         try {
@@ -556,12 +567,8 @@ public class Translation extends DepthFirstAdapter {
             try {
                 value = String.valueOf(Integer.parseInt(lVal) / Integer.parseInt(value));
             } catch(NumberFormatException e) {
-                Log.e("NumberFormatException", "Value was malformed " +
-                        "allowed until we start writing intermediate code");
             }
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
     }
 
@@ -587,15 +594,11 @@ public class Translation extends DepthFirstAdapter {
                 System.exit(-1);
             }
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
 
         try {
             value = String.valueOf(Integer.parseInt(lVal) % Integer.parseInt(value));
         } catch(NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
     }
 
@@ -671,6 +674,7 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseACharCExpr(ACharCExpr node) {
+        lVal = false;
         name = node.getCharConst().getText();
         valType = Constants.CHAR;
         value = node.getCharConst().toString();
@@ -678,12 +682,14 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseANumberExpr(ANumberExpr node) {
+        lVal = false;
         valType = Constants.INT;
         value = node.getNumber().toString().replaceAll("\\s+", "");
     }
 
     @Override
     public void caseASignedIdExpr(ASignedIdExpr node) {
+        lVal = true;
         TableEntry entry = symbolTable.getEntry(node.getId().getText());
         if (entry == null) {
             eUndefined(node.getId());
@@ -706,6 +712,7 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseAStrCLVal(AStrCLVal node) {
+        lVal = false;
         name = node.getStringConst().toString();
         valType = Constants.CHAR_ARR;
         value = node.getStringConst().getText();
@@ -714,152 +721,142 @@ public class Translation extends DepthFirstAdapter {
 
     private TableEntry ent;
     private boolean fromAss;
+
+    ArrayList<String> dimenVec;
     @Override
     public void caseAIdLVal(AIdLVal node) {
-        offs = 0;
-        token = node.getId();
-        name = node.getId().toString().replaceAll("\\s+", "");
-        TableEntry entry = symbolTable.getEntry(name);
+        lVal = true;
+        if (node.getExpr().size() == 0) {
+            // This is a scalar variable
+            offs = 0;
+            token = node.getId();
+            name = node.getId().toString().replaceAll("\\s+", "");
+            TableEntry entry = symbolTable.getEntry(name);
 
-        if (entry == null) {
-            System.err.println("Undeclared variable " + name);
-            System.exit(-1);
-        }
+            if (entry == null) {
+                System.err.println("Undeclared variable " + name);
+                System.exit(-1);
+            }
 
-        if (fromAss) {
-            // The work will be done by caseAOffsLVal
-            ent = entry;
-            return;
-        }
 
-        switch (entry.getEntryType()) {
-            case Constants.TYPE_ARR:
-                ArrayEntry aEntry = (ArrayEntry) entry;
-                valType = aEntry.getType();
-                value = "256";
-                break;
-            case Constants.TYPE_SCAL:
-                ScalarEntry sEntry = (ScalarEntry) entry;
-                valType = sEntry.getType();
-                value = "256";
-                break;
-        }
-    }
+            if (fromAss) {
+                // The work will be done by caseAOffsLVal
 
-    private int offs = 0;
-    private TId token;
+                ent = entry;
+                return;
+            }
 
-    @Override
-    public void caseAFuncCallExpr(AFuncCallExpr node) {
-        token = node.getId();
-        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
-        if (entry == null) {
-            eUndefined(token);
-        }
 
-        valType = entry.getType();
-        name = entry.getName();
-        switch(entry.getType()) {
-            case Constants.CHAR:
-                value = "s";
-                break;
-            case Constants.CHAR_ARR:
-                value = "some value";
-                break;
-            case Constants.INT:
-                value = "512";
-                break;
-            case Constants.INT_ARR:
-                value = "TODO this";
-                break;
-            default:
-                value = null;
-        }
+            switch (entry.getEntryType()) {
+                case Constants.TYPE_ARR:
+                    ArrayEntry aEntry = (ArrayEntry) entry;
+                    valType = aEntry.getType();
+                    value = "256";
+                    break;
+                case Constants.TYPE_SCAL:
+                    ScalarEntry sEntry = (ScalarEntry) entry;
+                    valType = sEntry.getType();
+                    value = "256";
+                    break;
+                default:
+                    Log.e("IdLVal", "Defaulted on lVal type");
+            }
+        } else {
+            // This is an array variable
+            token = node.getId();
+            String name = node.getId().getText();
+            TableEntry entry = symbolTable.getEntry(name);
 
-    }
+            if (entry == null) {
+                eUndefined(node.getId());
+            }
 
-    @Override
-    public void caseAIdOffsLVal(AIdOffsLVal node) {
-        token = node.getId();
-        String name = node.getId().getText();
-        TableEntry entry = symbolTable.getEntry(name);
-        if (entry == null) {
-            eUndefined(node.getId());
-        }
+            if (entry.getEntryType() != Constants.TYPE_ARR) {
+                Log.e(getPos(node.getId()), "Variable " + name + " was declared scalar " +
+                        "but used as array");
+                System.exit(-1);
+            }
 
-        node.getExpr().apply(this);
-        int index = 0;
-        try {
-            index = Integer.parseInt(value);
-        } catch(NumberFormatException e) {
-            e.printStackTrace();
-        }
-
-        offs = index;
-
-        if (fromAss) {
-            ent = entry;
-            return;
-        }
-
-        // The requested entry is of type arr
-        if (entry.getEntryType() == Constants.TYPE_ARR) {
             ArrayEntry aEntry = (ArrayEntry) entry;
+            if (node.getExpr().size() != aEntry.getDimensions()) {
+                Log.e(getPos(node.getId()), "Variable " + node.getId()
+                        + " was declared with " + aEntry.getDimensions()
+                        + " dimensions, but was used with " + node.getExpr().size());
+                System.exit(-1);
+            }
+
+            for (PExpr expr : node.getExpr()) {
+                expr.apply(this);
+                dimenVec.add(value);
+            }
+
+            if (fromAss) {
+                ent = entry;
+                return;
+            }
+
+            // TODO: Re-enable this to check for indexing
+            /*
             if (aEntry.getSize() != 0 && aEntry.getSize() <= index) {
                 Log.e(getPos(node.getId()), "Offset " + index + " is out of array bounds " +
                         "(size: " + aEntry.getSize() + ")");
                 System.exit(-1);
             }
+            */
 
-            if (aEntry.getType() == Constants.INT_ARR) {
-                valType = Constants.INT;
-            } else if (aEntry.getType() == Constants.CHAR_ARR) {
+            if (aEntry.getType() == Constants.CHAR_ARR) {
                 valType = Constants.CHAR;
+            } else {
+                valType = Constants.INT;
             }
 
-            value = aEntry.getValue(index);
-        } else {
-            Log.e(getPos(node.getId()), "Variable " + name + " was declared scalar " +
-                    "but used as array");
-            System.exit(-1);
+            value = aEntry.getValue(dimenVec);
         }
-
-        // We should check whether the
     }
+
+    private int offs = 0;
+    private TId token;
+    private boolean lVal = false;
 
     @Override
     public void caseALValAssStatement(ALValAssStatement node) {
         fromAss = true;
+        dimenVec = new ArrayList<>();
         node.getLVal().apply(this);
         Token t = token;
 
         fromAss = false;
         // At this point we have a TableEntry object available
 
-        if (ent.getEntryType() == Constants.TYPE_ARR && offs == -1) {
+        if (ent.getEntryType() == Constants.TYPE_ARR && dimenVec.size() == 0) {
             Log.e(getPos(token), "Cannot assign value to array");
             System.exit(-1);
         }
 
         if (ent.getEntryType() == Constants.TYPE_ARR) {
+            ArrayEntry entry = (ArrayEntry) ent;
+            // Since this is an array, we have an offset
+            node.getExpr().apply(this);
             try {
-                ArrayEntry entry = (ArrayEntry) ent;
-                // Since this is an array, we have an offset
-                node.getExpr().apply(this);
-                try {
-                    if (!symbolTable.setValue(entry.getName(), offs, value)) {
-                        Log.e("Array Value setting", "Something went wrong");
-                        System.exit(-1);
-                    }
-                } catch (Exception e) {
-                    Log.e(getPos(token), "Cannot set value");
+                if (!symbolTable.setValue(entry.getName(), dimenVec, value)) {
+                    Log.e("Array Value setting", "Something went wrong");
+                    System.exit(-1);
                 }
+            } catch (Exception e) {
+                Log.e(getPos(token), "Cannot set value");
+            }
 
-                entry = (ArrayEntry) symbolTable.getEntry(entry.getName());
-            } catch (ClassCastException ie) {
-                ie.printStackTrace();
-                System.err.println("Unknown instance of TableEntry class");
-                System.exit(-1);
+            //entry = (ArrayEntry) symbolTable.getEntry(entry.getName());
+            if (ent.getType() == Constants.INT_ARR) {
+                if (valType != Constants.INT) {
+                    Log.e(getPos(t), "Cannot assign char value to int array");
+                    System.exit(-1);
+                }
+            } else if (ent.getType() == Constants.CHAR_ARR) {
+                if (valType != Constants.CHAR) {
+                    Log.e(getPos(t), "Cannot assign int value to char array");
+                    System.exit(-1);
+                }
             }
         } else if (ent.getEntryType() == Constants.TYPE_SCAL) {
             ScalarEntry entry = (ScalarEntry) ent;
@@ -886,6 +883,63 @@ public class Translation extends DepthFirstAdapter {
     }
 
     @Override
+    public void caseAFuncCallExpr(AFuncCallExpr node) {
+
+        token = node.getId();
+        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
+        if (entry == null) {
+            eUndefined(token);
+        }
+
+        if (entry.getParamCount() > node.getExpr().size()) {
+            System.err.println("Too few arguments to function " + funcName
+                    + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
+            System.exit(-1);
+        } else if (entry.getParamCount() < node.getExpr().size()) {
+            System.err.println("Too many arguments to function " + funcName
+                    + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
+            System.exit(-1);
+        }
+
+        funcCall = true;
+        for (int i = 0; i < node.getExpr().size(); i++) {
+            node.getExpr().get(i).apply(this);
+            if (valType != entry.getParamTypeAt(i)) {
+                Log.e(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
+                        + " for function " + node.getId().getText() + ". Expecting "
+                        + getType(entry.getParamTypeAt(i)) + " got " + getType(valType));
+            }
+
+            if (entry.byRef(i) && !lVal) {
+                Log.e(getPos(node.getId()), "Cannot pass right value by ref "
+                        + " for argument " + i + " for function " + node.getId());
+                System.exit(-1);
+            }
+        }
+        funcCall = false;
+
+        valType = entry.getType();
+        name = entry.getName();
+        switch(entry.getType()) {
+            case Constants.CHAR:
+                value = "s";
+                break;
+            case Constants.CHAR_ARR:
+                value = "some value";
+                break;
+            case Constants.INT:
+                value = "512";
+                break;
+            case Constants.INT_ARR:
+                value = "TODO this";
+                break;
+            default:
+                value = null;
+        }
+
+    }
+
+    @Override
     public void caseAStrOffsLVal(AStrOffsLVal node) {
         String str = node.getStringConst().toString();
         node.getExpr().apply(this);
@@ -893,8 +947,6 @@ public class Translation extends DepthFirstAdapter {
         try {
             offset = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            Log.e("NumberFormatException", "Value was malformed " +
-                    "allowed until we start writing intermediate code");
         }
         if (offset >= str.length()) {
             Log.e(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
@@ -914,8 +966,7 @@ public class Translation extends DepthFirstAdapter {
         FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(funcName);
 
         if (entry == null) {
-            System.err.println("Function : " + node.getId().toString() + " was not declared in this scope");
-            System.exit(-1);
+            eUndefined(node.getId());
         } else {
             if (entry.getParamCount() > node.getExpr().size()) {
                 System.err.println("Too few arguments to function " + funcName
@@ -935,6 +986,12 @@ public class Translation extends DepthFirstAdapter {
                 Log.e(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
                         + " for function " + node.getId().getText() + ". Expecting "
                         + getType(entry.getParamTypeAt(i)) + " got " + getType(valType));
+            }
+
+            if (entry.byRef(i) && !lVal) {
+                Log.e(getPos(node.getId()), "Cannot pass right value by ref "
+                        + " for argument " + i + " for function " + node.getId());
+                System.exit(-1);
             }
         }
         funcCall = false;
