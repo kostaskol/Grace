@@ -1,0 +1,11 @@
+Unit: unit, <name>, -, -
+End Unit: endu, <name>, -, -
+Op: <op>, src1, src2, trgt
+Assignment: :=, src, -, trgt
+Array: 'offs', <var_name>, <offset>, target
+if: 'if', <comp_op>, src1, src2, trgt_lbl
+jump: 'j', -, -, trgt_lbl
+label: 'lbl', -, -, <lbl_name>
+call: 'c', <name>, -, -
+par: 'par', <name>, <mode>, <value>
+ret: 'ret', -, -, <value>

@@ -14,7 +14,6 @@ Helpers
   tab                   = 9;
   eol                   = cr lf | cr | lf;
   not_cr_lf             = [all - [cr + lf]];
-  not_com               = [all - ['$' + '$']];
   not_quote             = [all - '''];
 
   letter                = upper | lower;
@@ -27,7 +26,7 @@ Helpers
   hex                   = ('0' ('x' | 'X')) hex_digit+;
 
   ws                    = (' ' | tab | eol)+;
-  mul_com        	    = '$$' not_com* '$$';
+  mul_com        	    = '$$' [all - ['$' + '$']]* '$$';
   // We use eol* for a line comment ending because
   // otherwise it would not work if there was a comment at the end of the file
   line_com              = '$' not_cr_lf* eol*;
@@ -55,12 +54,24 @@ Helpers
   backslash_e           = '\\';
   apostrophe_e          = ''';
   quotes_e              = '\"';
-  hexa_e                = '\x' hex_digit+;
+  hexa_e                = '\x' hex_digit+
+                            | '\X' hex_digit+
+                            ;
 
   quote                 = '"';
 
   int                   = 'int';
   char                  = 'char';
+
+esc                     = nl_e
+                            | tab_e
+                            | cr_e
+                            | null_term_e
+                            | backslash_e
+                            | apostrophe_e
+                            | quotes_e
+                            | hexa_e
+                            ;
 
 // ______________________________________________________________________________________________________________
 Tokens
@@ -113,6 +124,7 @@ Tokens
   comma                 = ',';
   oc_brack              = '[' ']';
 
+  erroneous_tok         = (digit)+ (lower | upper);
   // Separator
   separator             = ';';
 
@@ -121,8 +133,8 @@ Tokens
 
   // Ignored tokens
   blank	                = (' ' | 13 | 10 | tab);
-  comment               = line_com;
   mult_comment          = mul_com;
+  comment               = line_com;
 
   operation             = plus | minus | times | div | mod;
 
@@ -130,24 +142,15 @@ Tokens
 
 // Identifier
   id                    = id;
-  char_const            = ''' [all - '''] '''
-                            | ''' nl_e '''
-                            | ''' tab_e '''
-                            | ''' cr_e '''
-                            | ''' null_term_e '''
-                            | ''' backslash_e '''
-                            | ''' apostrophe_e '''
-                            | ''' quotes_e '''
-                            | ''' hexa_e '''
-                            ;
+  char_const            = ''' ([all - '''] | esc) ''';
 
-  // For some reason all - ['"' - eol] wouldn't work, so this is a workaround
-  string_const          = quote [all - ['"' + [13 + [10 + 9]]]]* quote;
+  string_const          = '"' ([all - [['"'+'''] + '\']] | esc)* '"';
 
 // ______________________________________________________________________________________________________________
 Ignored Tokens
   blank,
-  comment;
+  comment,
+  mult_comment;
 
 
 // ______________________________________________________________________________________________________________
@@ -357,7 +360,7 @@ Productions
                             | {not_cond} not_cond {-> not_cond.cond}
                             ;
 
-  not_cond{->cond}   = {not_cond} not [operand]:operator_cond {-> New cond.not(operand.cond)}
+  not_cond{->cond}   = {not_cond} not not_cond {-> New cond.not(not_cond.cond)}
                             | {operator_cond} operator_cond {-> operator_cond.cond}
                             ;
 

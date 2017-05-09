@@ -2,6 +2,7 @@ package compiler.translation;
 
 
 import compiler.etc.Constants;
+import compiler.intermediateCode.Intermediate;
 import compiler.semanticAnalysis.*;
 import compiler.semanticAnalysis.tableEntries.ArrayEntry;
 import compiler.semanticAnalysis.tableEntries.FunctionEntry;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 public class Translation extends DepthFirstAdapter {
 
     private SymbolTable symbolTable;
+    private Intermediate iCode;
 
     private String getPos(Token t) {
         return "E: At line #" + t.getLine();
@@ -41,16 +43,6 @@ public class Translation extends DepthFirstAdapter {
         if (parType.equals("char"))             return Constants.CHAR;
         if (parType.equals("char[]"))           return Constants.CHAR_ARR;
         if (parType.equals("int[]"))            return Constants.INT_ARR;
-                                                return Constants.TYPE_UNKNOWN;
-    }
-
-    private int getType(String type) {
-        type = type.replaceAll("\\s+", "");
-        if (type.equals("nothing"))             return Constants.NOTHING;
-        if (type.equals("int"))                 return Constants.INT;
-        if (type.equals("char"))                return Constants.CHAR;
-        if (type.equals("char[]"))              return Constants.CHAR_ARR;
-        if (type.equals("int[]"))               return Constants.INT_ARR;
                                                 return Constants.TYPE_UNKNOWN;
     }
 
@@ -303,7 +295,11 @@ public class Translation extends DepthFirstAdapter {
             symbolTable.addEntry(entry);
         }
 
+        iCode = new Intermediate();
+
         node.getFuncDef().apply(this);
+
+        iCode.show();
     }
 
     private ArrayList<ArrayList<TId>> params;
@@ -312,12 +308,15 @@ public class Translation extends DepthFirstAdapter {
     private TId funcName;
     private int funcType;
 
+
     @Override
     public void caseAFuncDef(AFuncDef node) {
         node.getHead().apply(this);
         // At this point, we can declare the function definition in the symbol table
-        TableEntry entry = new FunctionEntry(funcName.toString().replaceAll("\\s+", ""),
-                funcType, params, paramType, byRef, true);
+        TableEntry entry = new FunctionEntry(funcName.getText(), funcType, params,
+                paramType, byRef, true);
+
+        iCode.genQuad(Constants.OP_UNIT, entry.getName(), null, null);
 
         if (!symbolTable.addEntry(entry)) {
             Log.e(funcName.getLine() + "",
@@ -368,6 +367,7 @@ public class Translation extends DepthFirstAdapter {
             System.exit(-1);
         }
 
+        iCode.genQuad(Constants.OP_ENDU, funcName.getText(), null, null);
 
     }
 
@@ -433,7 +433,6 @@ public class Translation extends DepthFirstAdapter {
     public void caseAVarDecLocalDef(AVarDecLocalDef node) {
         // Here, we can construct all of the
         //Log.d("Var Dec", "Adding " + node.getId() + " as " + node.getDType());
-        int size;
         TableEntry entry;
         for (TId id : node.getId()) {
             String name = id.toString().replace("\\s+", "");
@@ -450,12 +449,7 @@ public class Translation extends DepthFirstAdapter {
                     node.getExpr().get(i).apply(this);
                     dimens.add(value);
                 }
-                String expr = node.getExpr().toString().replaceAll("\\s+", "");
-                size = 256;
-                try {
-                    size = Integer.parseInt(expr);
-                } catch(NumberFormatException e) {
-                }
+
                 if (type.equals("char")) {
                     entry = new ArrayEntry(name, Constants.CHAR_ARR, dimens);
                 } else {
@@ -475,8 +469,10 @@ public class Translation extends DepthFirstAdapter {
     private String name;
     private int valType;
     private String value;
+    private String lValName;
     @Override
     public void caseAAddExpr(AAddExpr node) {
+        value = null;
         node.getLeft().apply(this);
         if (valType != Constants.INT) {
             Log.e(getPos(token), "Cannot add non-integer values");
@@ -488,21 +484,23 @@ public class Translation extends DepthFirstAdapter {
             Log.e(getPos(token), "Cannot add non-integer values");
             System.exit(-1);
         }
-        try {
-            value = String.valueOf(Integer.parseInt(lVal) + Integer.parseInt(value));
-        } catch(NumberFormatException e) {
 
-        }
+        // <value> can be either an actual value, or a register
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_ADD, lVal, value, newTmp);
+        value = newTmp;
     }
 
     @Override
     public void caseASubExpr(ASubExpr node) {
+        value = null;
+
         node.getLeft().apply(this);
-        String lVal = value;
         if (valType != Constants.INT) {
             Log.e(getPos(token), "Cannot subtract non-integer values");
             System.exit(-1);
         }
+        String lVal = value;
 
         node.getRight().apply(this);
         if (valType != Constants.INT) {
@@ -510,15 +508,14 @@ public class Translation extends DepthFirstAdapter {
             System.exit(-1);
         }
 
-        try {
-            value = String.valueOf(Integer.parseInt(lVal) - Integer.parseInt(value));
-        } catch(NumberFormatException e) {
-            ;
-        }
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_SUB, lVal, value, newTmp);
+        value = newTmp;
     }
 
     @Override
     public void caseAMultExpr(AMultExpr node) {
+        value = null;
         node.getLeft().apply(this);
         String lVal = value;
         if (valType != Constants.INT) {
@@ -532,15 +529,14 @@ public class Translation extends DepthFirstAdapter {
             System.exit(-1);
         }
 
-        try {
-            value = String.valueOf(Integer.parseInt(lVal) * Integer.parseInt(value));
-        } catch(NumberFormatException e) {
-        }
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_MULT, lVal, value, newTmp);
+        value = newTmp;
     }
 
     @Override
     public void caseADivExpr(ADivExpr node) {
-        System.out.println("Entered a division");
+        value = null;
         node.getLeft().apply(this);
         String lVal = value;
         if (valType != Constants.INT) {
@@ -554,22 +550,9 @@ public class Translation extends DepthFirstAdapter {
             System.exit(-1);
         }
 
-        try {
-            if (Integer.parseInt(value) == 0) {
-                Log.e(getPos(token), "Divide by zero");
-                System.exit(-1);
-            }
-        } catch(NumberFormatException e) {
-        }
-
-        try {
-            value = "2";
-            try {
-                value = String.valueOf(Integer.parseInt(lVal) / Integer.parseInt(value));
-            } catch(NumberFormatException e) {
-            }
-        } catch(NumberFormatException e) {
-        }
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_DIV, lVal, value, newTmp);
+        value = newTmp;
     }
 
     @Override
@@ -588,28 +571,9 @@ public class Translation extends DepthFirstAdapter {
             System.exit(-1);
         }
 
-        try {
-            if (Integer.parseInt(value) == 0) {
-                Log.e(getPos(token), "Divide by zero");
-                System.exit(-1);
-            }
-        } catch(NumberFormatException e) {
-        }
-
-        try {
-            value = String.valueOf(Integer.parseInt(lVal) % Integer.parseInt(value));
-        } catch(NumberFormatException e) {
-        }
-    }
-
-    @Override
-    public void caseASepStatement(ASepStatement node) {
-        super.caseASepStatement(node);
-    }
-
-    @Override
-    public void caseABlockStatement(ABlockStatement node) {
-        super.caseABlockStatement(node);
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_MOD, lVal, value, newTmp);
+        value = newTmp;
     }
 
     @Override
@@ -632,6 +596,8 @@ public class Translation extends DepthFirstAdapter {
                     + ", got " + getType(valType));
             System.exit(-1);
         }
+        // TODO: Figure out how to actually return something
+        iCode.genQuad(Constants.OP_RET, null, null, value);
     }
 
     @Override
@@ -661,8 +627,6 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseASignedExprExpr(ASignedExprExpr node) {
-        String sign = node.getSign().toString();
-        sign = sign.replaceAll("\\s+", "");
         node.getExpr().apply(this);
 
         if (!value.contains("-")) {
@@ -712,7 +676,7 @@ public class Translation extends DepthFirstAdapter {
 
     @Override
     public void caseAStrCLVal(AStrCLVal node) {
-        lVal = false;
+        lVal = true;
         name = node.getStringConst().toString();
         valType = Constants.CHAR_ARR;
         value = node.getStringConst().getText();
@@ -722,7 +686,7 @@ public class Translation extends DepthFirstAdapter {
     private TableEntry ent;
     private boolean fromAss;
 
-    ArrayList<String> dimenVec;
+    private ArrayList<String> dimenVec;
     @Override
     public void caseAIdLVal(AIdLVal node) {
         lVal = true;
@@ -756,7 +720,7 @@ public class Translation extends DepthFirstAdapter {
                 case Constants.TYPE_SCAL:
                     ScalarEntry sEntry = (ScalarEntry) entry;
                     valType = sEntry.getType();
-                    value = "256";
+                    value = sEntry.getValue();
                     break;
                 default:
                     Log.e("IdLVal", "Defaulted on lVal type");
@@ -778,9 +742,9 @@ public class Translation extends DepthFirstAdapter {
             }
 
             ArrayEntry aEntry = (ArrayEntry) entry;
-            if (node.getExpr().size() != aEntry.getDimensions()) {
+            if (node.getExpr().size() != aEntry.getDimensionsSize()) {
                 Log.e(getPos(node.getId()), "Variable " + node.getId()
-                        + " was declared with " + aEntry.getDimensions()
+                        + " was declared with " + aEntry.getDimensionsSize()
                         + " dimensions, but was used with " + node.getExpr().size());
                 System.exit(-1);
             }
@@ -838,6 +802,28 @@ public class Translation extends DepthFirstAdapter {
             // Since this is an array, we have an offset
             node.getExpr().apply(this);
             try {
+                if (dimenVec.size() != entry.getDimensionsSize()) {
+                    Log.e(getPos(token), "Array dimensions don't match");
+                    System.exit(-1);
+                }
+                // TODO: We can't just assign this. We need to get the
+                // n-dimensional offset
+                // The linear offset for an n-dimensional call is:
+                // dimen1 * dimen1Max + dimen2 * dimen2Max + ... + dimenN-1 * dimenN-1Max + dimenN
+                int off = 0;
+                ArrayList<String> dimensions = entry.getDimensions();
+                dimenVec.size();
+                for (int i = 0; i < dimensions.size() - 1; i++) {
+                    off += Integer.parseInt(dimenVec.get(i)) * Integer.parseInt(dimensions.get(i));
+                }
+
+                off += Integer.parseInt(dimenVec.get(dimenVec.size() - 1));
+
+                // We newTmp will hold the value of the offset
+                String newTmp = iCode.newTmp();
+                iCode.genQuad(Constants.OP_OFFS, ent.getName(), String.valueOf(off), newTmp);
+                iCode.genQuad(Constants.OP_ASS, newTmp, null, value);
+
                 if (!symbolTable.setValue(entry.getName(), dimenVec, value)) {
                     Log.e("Array Value setting", "Something went wrong");
                     System.exit(-1);
@@ -875,7 +861,7 @@ public class Translation extends DepthFirstAdapter {
                 System.err.println("Unknown error occurred while setting value");
                 System.exit(-1);
             }
-            entry = (ScalarEntry) symbolTable.getEntry(entry.getName());
+            iCode.genQuad(Constants.OP_ASS, entry.getName(), null, value);
         } else {
             Log.e(getPos(token), "Cannot assign value to function");
             System.exit(-1);
@@ -989,11 +975,23 @@ public class Translation extends DepthFirstAdapter {
             }
 
             if (entry.byRef(i) && !lVal) {
-                Log.e(getPos(node.getId()), "Cannot pass right value by ref "
+                Log.e(getPos(node.getId()), "Cannot pass rvalue by ref "
                         + " for argument " + i + " for function " + node.getId());
                 System.exit(-1);
             }
+
+            ArrayList<ArrayList<TId>> parameters = entry.getParameters();
+            for (ArrayList<TId> params : parameters) {
+                for (TId id : params) {
+                    if (entry.byRef(i)) {
+                        iCode.genQuad(Constants.OP_PAR, id.getText(), Constants.PAR_REF, value);
+                    } else {
+                        iCode.genQuad(Constants.OP_PAR, id.getText(), Constants.PAR_VAL, value);
+                    }
+                }
+            }
         }
+        iCode.genQuad(Constants.OP_CALL, funcName, null, null);
         funcCall = false;
     }
 

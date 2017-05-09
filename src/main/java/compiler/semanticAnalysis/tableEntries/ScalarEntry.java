@@ -2,6 +2,7 @@ package compiler.semanticAnalysis.tableEntries;
 
 
 import compiler.etc.Constants;
+import compiler.etc.Log;
 
 public class ScalarEntry extends TableEntry {
     // Use this constructor for scalar variables
@@ -16,7 +17,9 @@ public class ScalarEntry extends TableEntry {
         this.entryType = Constants.TYPE_SCAL;
     }
 
-    public void setValue(String value) { this.value = value; }
+    public void setValue(String value) {
+        this.value = value;
+    }
 
     public String getValue() { return this.value; }
 

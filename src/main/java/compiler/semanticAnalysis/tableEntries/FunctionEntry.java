@@ -26,7 +26,7 @@ public class FunctionEntry extends TableEntry {
         this.entryType = Constants.TYPE_FUNC;
     }
 
-    public List<ArrayList<TId>> getParameters() { return this.parameters; }
+    public ArrayList<ArrayList<TId>> getParameters() { return this.parameters; }
 
     public int getParamCount() {
         int counter = 0;
