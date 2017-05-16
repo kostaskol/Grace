@@ -53,4 +53,15 @@ public class Intermediate {
         }
     }
 
+    public String getRetRegister() {
+        // We move backwards to find the most recent return statement
+        for (int i = quads.size() - 1; i != 0; i--) {
+            Quad tmpQuad = quads.get(i);
+            if (tmpQuad != null && tmpQuad.getSrc1().equals(Constants.PAR_RET)) {
+                return tmpQuad.getTrgt();
+            }
+        }
+        return null;
+    }
+
 }

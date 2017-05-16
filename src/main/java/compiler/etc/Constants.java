@@ -49,8 +49,6 @@ public class Constants {
 
     public static final int OP_IF           = 405;
     public static final int OP_JUMP         = 406;
-    public static final int OP_LBL          = 407;
-    public static final int OP_JUMPL        = 4060;
 
     public static final int OP_CALL         = 408;
     public static final int OP_PAR          = 409;
@@ -60,4 +58,5 @@ public class Constants {
 
     public static final String PAR_REF      = "ref";
     public static final String PAR_VAL      = "val";
+    public static final String PAR_RET      = "ret";
 }

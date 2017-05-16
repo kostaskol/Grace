@@ -3,44 +3,50 @@ package compiler.semanticAnalysis.tableEntries;
 
 import compiler.etc.Constants;
 import compiler.etc.Log;
+import compiler.intermediateCode.Intermediate;
 
 import java.util.ArrayList;
 
 public class ArrayEntry extends TableEntry {
     private int size;
     private ArrayList<String> dimensions;
-    private String val;
-    private String[] offset;
+    private boolean isParam;
 
-    public ArrayEntry(String name, int type, ArrayList<String> dimens) {
+    public ArrayEntry(String name, int type, boolean param, ArrayList<String> dimens) {
         this.name = name.replaceAll("\\s+", "");
         this.type = type;
         entryType = Constants.TYPE_ARR;
-        this.size = 0;
-        for (String dim : dimens)
-            this.size += Integer.parseInt(dim);
-        this.offset = new String[size];
+        this.size = 1;
+        this.isParam = param;
+        for (String dim : dimens) {
+            this.size *= Integer.parseInt(dim);
+        }
         this.dimensions = dimens;
     }
 
-    public void setValue(String value, ArrayList<String> vec) {
-
-        int offs = 0;
-        for (int i = 0; i < vec.size() - 1; i++) {
-            offs += Integer.parseInt(vec.get(i)) * Integer.parseInt(this.dimensions.get(i));
+    public String getLinearOffset(ArrayList<String> dimen, Intermediate iCode) {
+        String offs = iCode.newTmp();
+        for (int i = 0; i < dimen.size() - 1; i++) {
+            String tmp = iCode.newTmp();
+            iCode.genQuad(Constants.OP_ASS, dimen.get(i), null, tmp);
+            for (int j = 1; j < dimen.size(); j++) {
+                iCode.genQuad(Constants.OP_MULT, tmp, dimen.get(j), tmp);
+            }
+            iCode.genQuad(Constants.OP_ADD, offs, tmp, offs);
         }
-        offs += Integer.parseInt(vec.get(vec.size() - 1));
-        this.offset[offs] = value;
+
+        iCode.genQuad(Constants.OP_ADD, offs, dimen.get(dimen.size() - 1), offs);
+        /*
+        for (int i = 0; i < dimen.size() - 1; i++) {
+            offs += Integer.parseInt(dimen.get(i)) * Integer.parseInt(this.dimensions.get(i));
+        }
+        offs += Integer.parseInt(dimen.get(dimen.size() - 1));
+        return this.array[offs];
+        */
+        return offs;
     }
 
-    public String getValue(ArrayList<String> vec) {
-        int offs = 0;
-        for (int i = 0; i < vec.size() - 1; i++) {
-            offs += Integer.parseInt(vec.get(i)) * Integer.parseInt(this.dimensions.get(i));
-        }
-        offs += Integer.parseInt(vec.get(vec.size() - 1));
-        return this.offset[offs];
-    }
+    public boolean isParam() { return this.isParam; }
 
     public int getDimensionsSize() { return this.dimensions.size(); }
 

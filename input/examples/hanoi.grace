@@ -4,13 +4,13 @@ fun solve () : nothing
       {
          if rings >= 1 then {
             hanoi(rings-1, source, auxiliary, target);
-            move(source, target);
+            $ move(source, target);
             hanoi(rings-1, auxiliary, target, source);
-            if x >= 2 then {
+            $$if x >= 2 then {
                 puts("If");
             } else {
                 puts("Else");
-            }
+            }$$
          }
       }
 

@@ -19,10 +19,12 @@ public class Translation extends DepthFirstAdapter {
     private SymbolTable symbolTable;
     private Intermediate iCode;
 
+    // The following 9 functions are utility functions
     private String getPos(Token t) {
         return "E: At line #" + t.getLine();
     }
 
+    // These two could be replaced by the normal "String" one
     private int getType(PRetType ret) {
 
         String retType = ret.toString();
@@ -46,7 +48,30 @@ public class Translation extends DepthFirstAdapter {
                                                 return Constants.TYPE_UNKNOWN;
     }
 
-    private String getType(int type) {
+    private int getType(String parType) {
+        parType = parType.replaceAll("\\s+", "");
+        if (parType.equals("nothing"))          return Constants.NOTHING;
+        if (parType.equals("int"))              return Constants.INT;
+        if (parType.equals("char"))             return Constants.CHAR;
+        if (parType.equals("char[]"))           return Constants.CHAR_ARR;
+        if (parType.equals("int[]"))            return Constants.INT_ARR;
+                                                return Constants.TYPE_UNKNOWN;
+    }
+
+    private int getEntryType(String parType) {
+        switch (getType(parType)) {
+            case Constants.INT_ARR:
+            case Constants.CHAR_ARR:
+                return Constants.TYPE_ARR;
+            case Constants.INT:
+            case Constants.CHAR:
+                return Constants.TYPE_SCAL;
+            default:
+                return Constants.TYPE_FUNC;
+        }
+    }
+
+    public static String getType(int type) {
         if (type == Constants.INT)      return "int";
         if (type == Constants.CHAR)     return "char";
         if (type == Constants.CHAR_ARR) return "char[]";
@@ -66,6 +91,7 @@ public class Translation extends DepthFirstAdapter {
                                                 return Constants.OP_UNKNOWN;
     }
 
+    // Returns an ArrayList of all of the built-in functions
     private ArrayList<TableEntry> getBuiltIn() {
         ArrayList<TableEntry> entries = new ArrayList<>();
         TableEntry entry;
@@ -74,6 +100,8 @@ public class Translation extends DepthFirstAdapter {
         ArrayList<Integer> paramType;
         ArrayList<Boolean> byRef;
         ArrayList<TId> tmp;
+        ArrayList<Integer> dimenTmp;
+        ArrayList<ArrayList<Integer>> paramDimens;
 
         // puti(n : int) : nothing
         String name = "puti";
@@ -81,12 +109,18 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
         tmp = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
+        dimenTmp.add(-1);
+        paramDimens.add(dimenTmp);
 
         tmp.add(new TId("n"));
         params.add(tmp);
         paramType.add(Constants.INT);
         byRef.add(false);
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         // fun putc (c : char) : nothing
@@ -100,8 +134,11 @@ public class Translation extends DepthFirstAdapter {
         params.add(tmp);
         paramType.add(Constants.CHAR);
         byRef.add(false);
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
+
 
         // fun puts puts(ref s : char[]) : nothing
         name = "puts";
@@ -109,12 +146,19 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
         tmp = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
+
+        dimenTmp.add(0);
+        paramDimens.add(dimenTmp);
 
         tmp.add(new TId("s"));
         params.add(tmp);
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         // fun geti () : int
@@ -122,8 +166,14 @@ public class Translation extends DepthFirstAdapter {
         params = new ArrayList<>();
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
+        dimenTmp.add(-1);
+        paramDimens.add(dimenTmp);
 
-        entry = new FunctionEntry(name, Constants.INT, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.INT, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         // fun getc () : char
@@ -132,7 +182,9 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
 
-        entry = new FunctionEntry(name, Constants.CHAR, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.CHAR, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         // fun gets (n : int, ref s : char[]) : nothing
@@ -141,19 +193,28 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
         tmp = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
 
         tmp.add(new TId("n"));
         params.add(tmp);
         paramType.add(Constants.INT);
         byRef.add(false);
+        dimenTmp.add(-1);
+        paramDimens.add(dimenTmp);
 
         tmp = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
         tmp.add(new TId("s"));
+        dimenTmp.add(0);
         params.add(tmp);
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
+        paramDimens.add(dimenTmp);
 
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         // fun abs(n : int) : int
@@ -162,13 +223,19 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
         tmp = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
 
         tmp.add(new TId("n"));
         params.add(tmp);
         paramType.add(Constants.INT);
         byRef.add(false);
+        dimenTmp.add(-1);
+        paramDimens.add(dimenTmp);
 
-        entry = new FunctionEntry(name, Constants.INT, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.INT, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -184,7 +251,9 @@ public class Translation extends DepthFirstAdapter {
         paramType.add(Constants.CHAR);
         byRef.add(false);
 
-        entry = new FunctionEntry(name, Constants.INT, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.INT, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -200,7 +269,9 @@ public class Translation extends DepthFirstAdapter {
         paramType.add(Constants.INT);
         byRef.add(false);
 
-        entry = new FunctionEntry(name, Constants.CHAR, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.CHAR, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -210,13 +281,19 @@ public class Translation extends DepthFirstAdapter {
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
         tmp = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+        dimenTmp = new ArrayList<>();
 
         tmp.add(new TId("s"));
         params.add(tmp);
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
+        dimenTmp.add(0);
+        paramDimens.add(dimenTmp);
 
-        entry = new FunctionEntry(name, Constants.INT, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.INT, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -233,7 +310,9 @@ public class Translation extends DepthFirstAdapter {
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
 
-        entry = new FunctionEntry(name, Constants.INT, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.INT, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -250,7 +329,9 @@ public class Translation extends DepthFirstAdapter {
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
 
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
 
@@ -267,7 +348,9 @@ public class Translation extends DepthFirstAdapter {
         paramType.add(Constants.CHAR_ARR);
         byRef.add(true);
 
-        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType, byRef, true);
+        entry = new FunctionEntry(name, Constants.NOTHING, params, paramType,
+                byRef, paramDimens, true, 0);
+
         entries.add(entry);
 
         return entries;
@@ -286,8 +369,15 @@ public class Translation extends DepthFirstAdapter {
         System.exit(-1);
     }
 
+    private void exit(String context, String msg) {
+        Log.e(context, msg);
+        System.exit(-1);
+    }
+
     @Override
     public void caseAProgram(AProgram node) {
+        // Initialise the symbol table
+        // and enter into the 0-th scope
         symbolTable = new SymbolTable();
         symbolTable.enterScope();
         ArrayList<TableEntry> entries = getBuiltIn();
@@ -295,104 +385,132 @@ public class Translation extends DepthFirstAdapter {
             symbolTable.addEntry(entry);
         }
 
+        // Enter into the 1st scope
+        symbolTable.enterScope();
+
         iCode = new Intermediate();
 
         node.getFuncDef().apply(this);
 
         iCode.show();
+
     }
 
+    // Each time we visit a parent node, we properly initialise
+    // the following objects, which are filled in by the children as we visit them
+
+    // Parameter names
     private ArrayList<ArrayList<TId>> params;
+    // Parameter types
     private ArrayList<Integer> paramType;
+    // True if parameter at index <i> is passed by ref
     private ArrayList<Boolean> byRef;
+    // Array dimensions for parameter i
+    private ArrayList<ArrayList<Integer>> paramDimens;
+    // Function name
     private TId funcName;
+    // Function type
     private int funcType;
 
 
     @Override
     public void caseAFuncDef(AFuncDef node) {
-        node.getHead().apply(this);
+        // Function definition
+
+        // Initialise the parameter lists
+        params = new ArrayList<>(node.getPDec().size());
+        paramType = new ArrayList<>();
+        byRef = new ArrayList<>();
+        paramDimens = new ArrayList<>();
+
+        // After each iteration, the above lists will contain one more
+        // element each
+        for (PPDec dec : node.getPDec()) {
+            // Iterate over the parameters
+            dec.apply(this);
+        }
+
+        // We get the return type of the function
+        funcType = getType(node.getRetType());
+
+        // and its name
+        funcName = node.getFuncName();
+
+
         // At this point, we can declare the function definition in the symbol table
         TableEntry entry = new FunctionEntry(funcName.getText(), funcType, params,
-                paramType, byRef, true);
+                paramType, byRef, paramDimens, true, symbolTable.getDepth());
 
-        iCode.genQuad(Constants.OP_UNIT, entry.getName(), null, null);
 
+        // Try to add the function entry into the symbol table.
+        // if there is a redefinition error, it returns false
         if (!symbolTable.addEntry(entry)) {
-            Log.e(funcName.getLine() + "",
-                    "Function " + funcName + " already exists within this scope");
-            System.exit(-1);
+            eDeclared(funcName);
         }
 
         symbolTable.enterScope();
 
-        symbolTable.setScopeType(entry.getType());
+        // Each scope has its own type (the function's return type.
+        // Used when checking the return statement)
+        // We also save the scope's name (used in un-nesting function definitions)
+        symbolTable.setScopeData(entry.getName(), entry.getType());
 
         for (int i = 0; i < params.size(); i++) {
+            // After getting the parameters (and
+            // saving them in the symbol table as parameters)
+            // we save each parameter in the symbol table
             if (paramType.get(i) == Constants.INT_ARR || paramType.get(i) == Constants.CHAR_ARR) {
                 for (TId id : params.get(i)) {
                     ArrayList<String> tmp = new ArrayList<>();
                     tmp.add("0");
-                    entry = new ArrayEntry(id.getText(), paramType.get(i), tmp);
-                    //Log.d("FuncDef", "Adding " + id.)
+                    entry = new ArrayEntry(id.getText(), paramType.get(i), true, tmp);
                     if (!symbolTable.addEntry(entry)) {
-                        Log.e(getPos(funcName),
+                        exit(getPos(funcName),
                                 "Variable " + funcName + "already exists within this scope");
-                        System.exit(-1);
                     }
                 }
             } else {
                 for (TId id : params.get(i)) {
-                    entry = new ScalarEntry(id.getText(), paramType.get(i), byRef.get(i));
+                    entry = new ScalarEntry(id.getText(), paramType.get(i), true, byRef.get(i));
                     if (!symbolTable.addEntry(entry)) {
-                        Log.e(getPos(funcName),
+                        exit(getPos(funcName),
                                 "Variable " + funcName + "already exists within this scope");
-                        System.exit(-1);
                     }
                 }
             }
         }
 
-
+        // Visit each local definition node
+        // (function definition | function declaration | variable declaration)
         for (PLocalDef def : node.getLocalDef()) {
             def.apply(this);
         }
+
+        iCode.genQuad(Constants.OP_UNIT, node.getFuncName().getText(), null, null);
+
+        // Visit each statement node
         for (PStatement st : node.getStatement()) {
             st.apply(this);
         }
 
+
         String name = symbolTable.exitScope();
+        // Check if all function "promises" have been fulfilled
         if (name != null) {
-            Log.e("Function Undefined", "Function " + name + " was never defined");
-            System.exit(-1);
+            exit("Function Undefined", "Function " + name + " was never defined");
         }
 
-        iCode.genQuad(Constants.OP_ENDU, funcName.getText(), null, null);
-
+        iCode.genQuad(Constants.OP_ENDU, node.getFuncName().getText(), null, null);
     }
 
     @Override
     public void caseAFuncDecLocalDef(AFuncDecLocalDef node) {
-        node.getHead().apply(this);
-
-        FunctionEntry entry = new FunctionEntry(funcName.toString().replaceAll("\\s+", ""),
-                funcType, params, paramType, byRef, false);
-
-        if (!symbolTable.addEntry(entry)) {
-            Log.e(getPos(funcName),
-                    "Function name " + funcName + " was already declared within current scope");
-            System.exit(-1);
-        }
-
-    }
-
-    @Override
-    public void caseAHead(AHead node) {
-        // Function definition
+        // Function declaration
+        // Same as above, initialise the lists and fill them out
         params = new ArrayList<>(node.getPDec().size());
         paramType = new ArrayList<>();
         byRef = new ArrayList<>();
-
+        paramDimens = new ArrayList<>();
         for (PPDec dec : node.getPDec()) {
             // Iterate over the parameters
             dec.apply(this);
@@ -402,8 +520,16 @@ public class Translation extends DepthFirstAdapter {
         funcType = getType(node.getRetType());
 
         funcName = node.getFuncName();
-    }
 
+        FunctionEntry entry = new FunctionEntry(funcName.toString().replaceAll("\\s+", ""),
+                funcType, params, paramType, byRef, paramDimens, false,
+                symbolTable.getDepth());
+
+        if (!symbolTable.addEntry(entry)) {
+            eDeclared(funcName);
+        }
+
+    }
 
 
     @Override
@@ -414,34 +540,60 @@ public class Translation extends DepthFirstAdapter {
         // Add byRefs
         byRef.add(node.getRef() != null);
 
-        // Add type
-        for (int i = 0; i < node.getId().size(); i++) {
-            paramType.add(getType(node.getParType()));
-        }
+        // The parameter type node will
+        // fill out the type and dimensions array
+        node.getParType().apply(this);
 
-        // Value passed by ref
+        // If value isn't passed by ref
+        // and the type is array, it's an error
         if (node.getRef() == null &&
-                (getType(node.getParType()) == Constants.INT_ARR
-                || (getType(node.getParType()) == Constants.CHAR_ARR))) {
-            Log.e(getPos(node.getId().get(0)), "Array parameter(s) "
+                (getEntryType(node.getParType().toString()) == Constants.TYPE_ARR)) {
+            exit(getPos(node.getId().get(0)), "Array parameter(s) "
                     + " must be passed by reference");
-            System.exit(-1);
         }
     }
 
     @Override
+    public void caseAParType(AParType node) {
+        ArrayList<Integer> dimenTmp = new ArrayList<>();
+        if (node.getOcBrack() != null) {
+            dimenTmp.add(0);
+        }
+
+        for (TNumber num : node.getNumber()) {
+            dimenTmp.add(Integer.parseInt(num.getText()));
+        }
+
+        String type = node.getDType().getText();
+
+        // If the ids have been declared as an
+        // n-dimensional array, we hold that information in the symbol table
+        if (node.getNumber().size() != 0 || node.getOcBrack() != null) {
+            type += "[]";
+        }
+
+        paramType.add(getType(type));
+
+        paramDimens.add(dimenTmp);
+    }
+
+    @Override
     public void caseAVarDecLocalDef(AVarDecLocalDef node) {
-        // Here, we can construct all of the
-        //Log.d("Var Dec", "Adding " + node.getId() + " as " + node.getDType());
+        // {var_dec} id* d_type expr*
+
         TableEntry entry;
+        // Iterate over variable names and types and add them to
+        // the symbol table
         for (TId id : node.getId()) {
+            // Iterate over each id and create a TableEntry object
             String name = id.toString().replace("\\s+", "");
             String type = node.getDType().getText();
-            if (node.getExpr().size() == 0) {
+            if (getEntryType(node.getDType().getText()) != Constants.TYPE_ARR
+                    && node.getExpr().size() == 0){
                 if (type.equals("char")) {
-                    entry = new ScalarEntry(name, Constants.CHAR, false);
+                    entry = new ScalarEntry(name, Constants.CHAR, false, false);
                 } else {
-                    entry = new ScalarEntry(name, Constants.INT, false);
+                    entry = new ScalarEntry(name, Constants.INT, false, false);
                 }
             } else {
                 ArrayList<String> dimens = new ArrayList<>();
@@ -451,45 +603,42 @@ public class Translation extends DepthFirstAdapter {
                 }
 
                 if (type.equals("char")) {
-                    entry = new ArrayEntry(name, Constants.CHAR_ARR, dimens);
+                    entry = new ArrayEntry(name, Constants.CHAR_ARR, false, dimens);
                 } else {
-                    entry = new ArrayEntry(name, Constants.INT_ARR, dimens);
+                    entry = new ArrayEntry(name, Constants.INT_ARR, false, dimens);
                 }
             }
 
             if (!symbolTable.addEntry(entry)) {
-                System.err.println("Variable with name " + name + " already exists in this scope");
-                System.exit(-1);
+                eDeclared(id);
             }
         }
-
     }
 
 
     private String name;
     private int valType;
     private String value;
-    private String lValName;
+
     @Override
     public void caseAAddExpr(AAddExpr node) {
         value = null;
         node.getLeft().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot add non-integer values");
-            System.exit(-1);
-        }
-        String lVal = value;
-        node.getRight().apply(this);
-        if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot add non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot add non-integer values");
         }
 
-        // <value> can be either an actual value, or a register
+        String leftVal = value;
+        node.getRight().apply(this);
+        if (valType != Constants.INT) {
+            exit(getPos(token), "Cannot add non-integer values");
+        }
+
         String newTmp = iCode.newTmp();
-        iCode.genQuad(Constants.OP_ADD, lVal, value, newTmp);
+        iCode.genQuad(Constants.OP_ADD, leftVal, value, newTmp);
         value = newTmp;
     }
+
 
     @Override
     public void caseASubExpr(ASubExpr node) {
@@ -497,133 +646,165 @@ public class Translation extends DepthFirstAdapter {
 
         node.getLeft().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot subtract non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot subtract non-integer values");
         }
-        String lVal = value;
+        String leftVal = value;
 
         node.getRight().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot subtract non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot subtract non-integer values");
         }
 
         String newTmp = iCode.newTmp();
-        iCode.genQuad(Constants.OP_SUB, lVal, value, newTmp);
+        iCode.genQuad(Constants.OP_SUB, leftVal, value, newTmp);
         value = newTmp;
     }
+
 
     @Override
     public void caseAMultExpr(AMultExpr node) {
         value = null;
         node.getLeft().apply(this);
-        String lVal = value;
+        String leftVal = value;
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot multiply non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot multiply non-integer values");
         }
 
         node.getRight().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot multiply non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot multiply non-integer values");
         }
 
         String newTmp = iCode.newTmp();
-        iCode.genQuad(Constants.OP_MULT, lVal, value, newTmp);
+        iCode.genQuad(Constants.OP_MULT, leftVal, value, newTmp);
         value = newTmp;
     }
+
 
     @Override
     public void caseADivExpr(ADivExpr node) {
         value = null;
         node.getLeft().apply(this);
-        String lVal = value;
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot divide non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot divide non-integer values");
         }
+        String leftVal = value;
 
         node.getRight().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot divide non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot divide non-integer values");
         }
 
         String newTmp = iCode.newTmp();
-        iCode.genQuad(Constants.OP_DIV, lVal, value, newTmp);
+        iCode.genQuad(Constants.OP_DIV, leftVal, value, newTmp);
         value = newTmp;
     }
+
 
     @Override
     public void caseAModExpr(AModExpr node) {
         node.getLeft().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot find modulus of non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot find modulus of non-integer values");
         }
 
-        String lVal = value;
+        String leftVal = value;
 
         node.getRight().apply(this);
         if (valType != Constants.INT) {
-            Log.e(getPos(token), "Cannot find modulus of non-integer values");
-            System.exit(-1);
+            exit(getPos(token), "Cannot find modulus of non-integer values");
         }
 
         String newTmp = iCode.newTmp();
-        iCode.genQuad(Constants.OP_MOD, lVal, value, newTmp);
+        iCode.genQuad(Constants.OP_MOD, leftVal, value, newTmp);
         value = newTmp;
     }
+
 
     @Override
     public void caseAIfNoElseStatement(AIfNoElseStatement node) {
         super.caseAIfNoElseStatement(node);
     }
 
+
     @Override
     public void caseAIfElseStatement(AIfElseStatement node) {
         super.caseAIfElseStatement(node);
     }
 
+
     @Override
     public void caseARetStStatement(ARetStStatement node) {
+        // Get the returned expression value and type
+        // and query the symbol table to figure out
+        // if the returned type is the same as the current scope's one
         node.getExpr().apply(this);
         int scopeType = symbolTable.getCurrScopeType();
         if (scopeType != valType) {
-            Log.e(getPos(node.getReturn()), "Bad return type. Expecting "
+            exit(getPos(node.getReturn()), "Bad return type. Expecting "
                     + getType(scopeType)
                     + ", got " + getType(valType));
-            System.exit(-1);
         }
-        // TODO: Figure out how to actually return something
+
+//        String register = iCode.getRetRegister();
+//        if (register == null) {
+//            exit(getPos(node.getReturn()), "Could not find any return statements (why?)");
+//        }
+
+        // iCode.genQuad(Constants.OP_ASS, value, null, register);
         iCode.genQuad(Constants.OP_RET, null, null, value);
     }
+
 
     @Override
     public void caseAWhileStStatement(AWhileStStatement node) {
         super.caseAWhileStStatement(node);
     }
 
+
+    private boolean isCond;
     @Override
     public void caseAOrCond(AOrCond node) {
         super.caseAOrCond(node);
     }
+
 
     @Override
     public void caseAAndCond(AAndCond node) {
         super.caseAAndCond(node);
     }
 
+
     @Override
     public void caseANotCond(ANotCond node) {
         super.caseANotCond(node);
     }
 
+
     @Override
     public void caseACompCond(ACompCond node) {
-        super.caseACompCond(node);
+        // Get the value and the type of the left expression
+        node.getLeft().apply(this);
+        int leftType = valType;
+        String leftValue = value;
+
+        // And of the right one
+        node.getRight().apply(this);
+
+        // Make the necessary checks (type compatibility & array checking)
+        if (leftType != valType) {
+            exit(getPos(node.getCompOperator()), "Invalid comparison between " +
+                    getType(leftType) + " and " + getType(valType));
+        }
+
+        if (leftType == Constants.INT_ARR || leftType == Constants.CHAR_ARR) {
+            exit(getPos(node.getCompOperator()), "Invalid comparison (Array operand)");
+        }
+
+        Log.d(getPos(node.getCompOperator()), "Comparison between " + leftValue +
+                " and " + value);
     }
+
 
     @Override
     public void caseASignedExprExpr(ASignedExprExpr node) {
@@ -636,20 +817,25 @@ public class Translation extends DepthFirstAdapter {
         }
     }
 
+
     @Override
     public void caseACharCExpr(ACharCExpr node) {
+        // Character constants are considered right values
         lVal = false;
         name = node.getCharConst().getText();
         valType = Constants.CHAR;
-        value = node.getCharConst().toString();
+        value = node.getCharConst().getText();
     }
+
 
     @Override
     public void caseANumberExpr(ANumberExpr node) {
+        // Number constants are considered right values
         lVal = false;
         valType = Constants.INT;
-        value = node.getNumber().toString().replaceAll("\\s+", "");
+        value = node.getNumber().getText();
     }
+
 
     @Override
     public void caseASignedIdExpr(ASignedIdExpr node) {
@@ -660,8 +846,7 @@ public class Translation extends DepthFirstAdapter {
         }
 
         if (entry.getEntryType() != Constants.TYPE_SCAL) {
-            Log.e(getPos(node.getId()), node.getId() + " was declared as array");
-            System.exit(-1);
+            exit(getPos(node.getId()), node.getId() + " was declared as array");
         }
 
         ScalarEntry sEntry = (ScalarEntry) entry;
@@ -674,58 +859,65 @@ public class Translation extends DepthFirstAdapter {
         valType = sEntry.getType();
     }
 
+
+    private boolean isString;
+
     @Override
     public void caseAStrCLVal(AStrCLVal node) {
+        // String constants are considered left values
+        // but can't be assigned a value
         lVal = true;
+        isString = true;
         name = node.getStringConst().toString();
         valType = Constants.CHAR_ARR;
         value = node.getStringConst().getText();
     }
 
 
-    private TableEntry ent;
+    // If we need the left value in an assignment statement
+    // or a function call, <ent> will hold the entire TableEntry of the id
+    private TableEntry ent = null;
     private boolean fromAss;
+    // Holds the dimensions with which the left value was used (e.g. x[1][2][3]..[n])
+    private ArrayList<String> dimenList;
 
-    private ArrayList<String> dimenVec;
+
     @Override
     public void caseAIdLVal(AIdLVal node) {
         lVal = true;
         if (node.getExpr().size() == 0) {
             // This is a scalar variable
-            offs = 0;
             token = node.getId();
             name = node.getId().toString().replaceAll("\\s+", "");
             TableEntry entry = symbolTable.getEntry(name);
 
             if (entry == null) {
-                System.err.println("Undeclared variable " + name);
-                System.exit(-1);
+                eUndefined(node.getId());
             }
 
 
-            if (fromAss) {
+            if (fromAss || fromFunc) {
                 // The work will be done by caseAOffsLVal
-
+                // or caseAFuncCallExpr / caseAFuncCallStatement
                 ent = entry;
                 return;
             }
 
-
             switch (entry.getEntryType()) {
                 case Constants.TYPE_ARR:
-                    ArrayEntry aEntry = (ArrayEntry) entry;
-                    valType = aEntry.getType();
-                    value = "256";
-                    break;
+                    exit(getPos(node.getId()), "Array variable " + node.getId().getText() +
+                        " used without offset");
                 case Constants.TYPE_SCAL:
                     ScalarEntry sEntry = (ScalarEntry) entry;
                     valType = sEntry.getType();
-                    value = sEntry.getValue();
+                    value = sEntry.getName();
                     break;
                 default:
                     Log.e("IdLVal", "Defaulted on lVal type");
             }
         } else {
+            dimenList = new ArrayList<>();
+
             // This is an array variable
             token = node.getId();
             String name = node.getId().getText();
@@ -736,37 +928,26 @@ public class Translation extends DepthFirstAdapter {
             }
 
             if (entry.getEntryType() != Constants.TYPE_ARR) {
-                Log.e(getPos(node.getId()), "Variable " + name + " was declared scalar " +
+                exit(getPos(node.getId()), "Variable " + name + " was declared scalar " +
                         "but used as array");
-                System.exit(-1);
             }
 
             ArrayEntry aEntry = (ArrayEntry) entry;
             if (node.getExpr().size() != aEntry.getDimensionsSize()) {
-                Log.e(getPos(node.getId()), "Variable " + node.getId()
+                exit(getPos(node.getId()), "Variable " + node.getId()
                         + " was declared with " + aEntry.getDimensionsSize()
                         + " dimensions, but was used with " + node.getExpr().size());
-                System.exit(-1);
             }
 
             for (PExpr expr : node.getExpr()) {
                 expr.apply(this);
-                dimenVec.add(value);
+                dimenList.add(value);
             }
 
-            if (fromAss) {
+            if (fromAss || fromFunc) {
                 ent = entry;
                 return;
             }
-
-            // TODO: Re-enable this to check for indexing
-            /*
-            if (aEntry.getSize() != 0 && aEntry.getSize() <= index) {
-                Log.e(getPos(node.getId()), "Offset " + index + " is out of array bounds " +
-                        "(size: " + aEntry.getSize() + ")");
-                System.exit(-1);
-            }
-            */
 
             if (aEntry.getType() == Constants.CHAR_ARR) {
                 valType = Constants.CHAR;
@@ -774,27 +955,34 @@ public class Translation extends DepthFirstAdapter {
                 valType = Constants.INT;
             }
 
-            value = aEntry.getValue(dimenVec);
+            String offset = aEntry.getLinearOffset(dimenList, iCode);
+            value = iCode.newTmp();
+            iCode.genQuad(Constants.OP_OFFS, aEntry.getName(), offset, "[" + value + "]");
         }
     }
 
-    private int offs = 0;
+    // Required to print the line on which the error occurred
     private TId token;
     private boolean lVal = false;
+
 
     @Override
     public void caseALValAssStatement(ALValAssStatement node) {
         fromAss = true;
-        dimenVec = new ArrayList<>();
+        isString = false;
         node.getLVal().apply(this);
+
         Token t = token;
+
+        if (isString) {
+            exit("Bad assignment value", "Can't assign value to string constant");
+        }
 
         fromAss = false;
         // At this point we have a TableEntry object available
 
-        if (ent.getEntryType() == Constants.TYPE_ARR && dimenVec.size() == 0) {
-            Log.e(getPos(token), "Cannot assign value to array");
-            System.exit(-1);
+        if (ent.getEntryType() == Constants.TYPE_ARR && dimenList.size() == 0) {
+            exit(getPos(token), "Cannot assign value to array");
         }
 
         if (ent.getEntryType() == Constants.TYPE_ARR) {
@@ -802,128 +990,131 @@ public class Translation extends DepthFirstAdapter {
             // Since this is an array, we have an offset
             node.getExpr().apply(this);
             try {
-                if (dimenVec.size() != entry.getDimensionsSize()) {
-                    Log.e(getPos(token), "Array dimensions don't match");
-                    System.exit(-1);
+                if (dimenList.size() != entry.getDimensionsSize()) {
+                    exit(getPos(token), "Array dimensions don't match");
                 }
                 // TODO: We can't just assign this. We need to get the
                 // n-dimensional offset
                 // The linear offset for an n-dimensional call is:
                 // dimen1 * dimen1Max + dimen2 * dimen2Max + ... + dimenN-1 * dimenN-1Max + dimenN
                 int off = 0;
-                ArrayList<String> dimensions = entry.getDimensions();
-                dimenVec.size();
-                for (int i = 0; i < dimensions.size() - 1; i++) {
-                    off += Integer.parseInt(dimenVec.get(i)) * Integer.parseInt(dimensions.get(i));
-                }
-
-                off += Integer.parseInt(dimenVec.get(dimenVec.size() - 1));
 
                 // We newTmp will hold the value of the offset
                 String newTmp = iCode.newTmp();
                 iCode.genQuad(Constants.OP_OFFS, ent.getName(), String.valueOf(off), newTmp);
                 iCode.genQuad(Constants.OP_ASS, newTmp, null, value);
 
-                if (!symbolTable.setValue(entry.getName(), dimenVec, value)) {
-                    Log.e("Array Value setting", "Something went wrong");
-                    System.exit(-1);
-                }
+                /*if (!symbolTable.setValue(entry.getName(), dimenList, value)) {
+                    exit("Array Value setting", "Something went wrong");
+                }*/
             } catch (Exception e) {
-                Log.e(getPos(token), "Cannot set value");
+                exit(getPos(token), "Cannot set value");
             }
 
             //entry = (ArrayEntry) symbolTable.getEntry(entry.getName());
             if (ent.getType() == Constants.INT_ARR) {
                 if (valType != Constants.INT) {
-                    Log.e(getPos(t), "Cannot assign char value to int array");
-                    System.exit(-1);
+                    exit(getPos(t), "Cannot assign char value to int array");
                 }
             } else if (ent.getType() == Constants.CHAR_ARR) {
                 if (valType != Constants.CHAR) {
-                    Log.e(getPos(t), "Cannot assign int value to char array");
-                    System.exit(-1);
+                    exit(getPos(t), "Cannot assign int value to char array");
                 }
             }
         } else if (ent.getEntryType() == Constants.TYPE_SCAL) {
             ScalarEntry entry = (ScalarEntry) ent;
-            funcCall = true;
             node.getExpr().apply(this);
             // We get <value> from the expression
-            funcCall = false;
             if (entry.getType() != valType) {
-                Log.e(getPos(token), "Variable " + t.getText() + " cannot be " +
+                exit(getPos(token), "Variable " + t.getText() + " cannot be " +
                         "assigned value " + value + ". Type mismatch (expecting "
                         + getType(entry.getType()) + ", got " + getType(valType) + ")");
-                System.exit(-1);
             }
 
             if (!symbolTable.setValue(entry.getName(), value)) {
-                System.err.println("Unknown error occurred while setting value");
-                System.exit(-1);
+                exit(getPos(token), "Unknown error occurred while setting value");
             }
             iCode.genQuad(Constants.OP_ASS, entry.getName(), null, value);
         } else {
-            Log.e(getPos(token), "Cannot assign value to function");
-            System.exit(-1);
+            exit(getPos(token), "Cannot assign value to function");
         }
     }
+
+    private boolean fromFunc;
 
     @Override
     public void caseAFuncCallExpr(AFuncCallExpr node) {
 
         token = node.getId();
-        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
-        if (entry == null) {
+        FunctionEntry functionEntry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
+        if (functionEntry == null) {
             eUndefined(token);
         }
 
-        if (entry.getParamCount() > node.getExpr().size()) {
-            System.err.println("Too few arguments to function " + funcName
-                    + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
-            System.exit(-1);
-        } else if (entry.getParamCount() < node.getExpr().size()) {
-            System.err.println("Too many arguments to function " + funcName
-                    + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
-            System.exit(-1);
+        lVal = false;
+        if (functionEntry.getParamCount() > node.getExpr().size()) {
+            exit(getPos(node.getId()), "Too few arguments to function " + funcName
+                    + "\nExpecting " + functionEntry.getParamCount() + " got " + node.getExpr().size());
+        } else if (functionEntry.getParamCount() < node.getExpr().size()) {
+            exit(getPos(node.getId()), "Too many arguments to function " + funcName
+                    + "\nExpecting " + functionEntry.getParamCount() + " got " + node.getExpr().size());
         }
 
-        funcCall = true;
+        fromFunc = true;
         for (int i = 0; i < node.getExpr().size(); i++) {
+            ent = null;
             node.getExpr().get(i).apply(this);
-            if (valType != entry.getParamTypeAt(i)) {
-                Log.e(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
+            TableEntry entry = ent;
+            int valueType;
+            if (entry == null) {
+                valueType = valType;
+            } else {
+                valueType = entry.getType();
+            }
+            if (valueType != functionEntry.getParamTypeAt(i)) {
+                exit(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
                         + " for function " + node.getId().getText() + ". Expecting "
-                        + getType(entry.getParamTypeAt(i)) + " got " + getType(valType));
+                        + getType(functionEntry.getParamTypeAt(i)) + " got " + getType(valType));
             }
 
-            if (entry.byRef(i) && !lVal) {
-                Log.e(getPos(node.getId()), "Cannot pass right value by ref "
+            if (valueType == Constants.INT_ARR || valueType == Constants.CHAR_ARR) {
+                Log.d("FuncExpr", "isString is " + isString);
+                if (lVal && !isString) {
+                    if (ent == null) {
+                        exit(getPos(token), "Entry is null");
+                    }
+
+                    ArrayEntry arrayEntry = (ArrayEntry) ent;
+                    if (arrayEntry.getDimensionsSize() != functionEntry.getParamDimensions(i)) {
+                        exit(getPos(token), "Array dimension mismatch for argument " +
+                                (i + 1) + " to function " + node.getId() + ". Expecting " +
+                                functionEntry.getParamDimensions(i) + " got " + arrayEntry.getDimensionsSize());
+                    }
+                }
+            }
+
+            if (functionEntry.byRef(i) && !lVal) {
+                exit(getPos(node.getId()), "Cannot pass right value by ref "
                         + " for argument " + i + " for function " + node.getId());
-                System.exit(-1);
+            }
+
+            if (functionEntry.byRef(i)) {
+                iCode.genQuad(Constants.OP_PAR, Constants.PAR_REF, null, value);
+            } else {
+                iCode.genQuad(Constants.OP_PAR, Constants.PAR_VAL, null, value);
             }
         }
-        funcCall = false;
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(Constants.OP_PAR, Constants.PAR_RET, null, newTmp);
+        iCode.genQuad(Constants.OP_CALL, node.getId().getText(), null, null);
+        fromFunc = false;
 
-        valType = entry.getType();
-        name = entry.getName();
-        switch(entry.getType()) {
-            case Constants.CHAR:
-                value = "s";
-                break;
-            case Constants.CHAR_ARR:
-                value = "some value";
-                break;
-            case Constants.INT:
-                value = "512";
-                break;
-            case Constants.INT_ARR:
-                value = "TODO this";
-                break;
-            default:
-                value = null;
-        }
+        valType = functionEntry.getType();
+        name = functionEntry.getName();
+        value = newTmp;
 
     }
+
 
     @Override
     public void caseAStrOffsLVal(AStrOffsLVal node) {
@@ -935,64 +1126,83 @@ public class Translation extends DepthFirstAdapter {
         } catch (NumberFormatException e) {
         }
         if (offset >= str.length()) {
-            Log.e(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
+            exit(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
                     "(Offset: " + offset + ", Length: " + str.length() + ")");
-            System.exit(-1);
         }
         valType = Constants.CHAR;
         value = str.charAt(offset) + "";
     }
 
-    private boolean funcCall;
+
 
     @Override
     public void caseAFuncCallStatement(AFuncCallStatement node) {
-        String funcName = node.getId().toString();
-        funcName = funcName.replaceAll("\\s+", "");
-        FunctionEntry entry = (FunctionEntry) symbolTable.getEntry(funcName);
-
-        if (entry == null) {
-            eUndefined(node.getId());
-        } else {
-            if (entry.getParamCount() > node.getExpr().size()) {
-                System.err.println("Too few arguments to function " + funcName
-                            + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
-                System.exit(-1);
-            } else if (entry.getParamCount() < node.getExpr().size()) {
-                System.err.println("Too many arguments to function " + funcName
-                            + "\nExpecting " + entry.getParamCount() + " got " + node.getExpr().size());
-                System.exit(-1);
-            }
-
+        token = node.getId();
+        FunctionEntry functionEntry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
+        if (functionEntry == null) {
+            eUndefined(token);
         }
-        funcCall = true;
+
+        lVal = false;
+        if (functionEntry.getParamCount() > node.getExpr().size()) {
+            exit(getPos(node.getId()), "Too few arguments to function " + funcName
+                    + "\nExpecting " + functionEntry.getParamCount() + " got " + node.getExpr().size());
+        } else if (functionEntry.getParamCount() < node.getExpr().size()) {
+            exit(getPos(node.getId()), "Too many arguments to function " + funcName
+                    + "\nExpecting " + functionEntry.getParamCount() + " got " + node.getExpr().size());
+        }
+
+        fromFunc = true;
         for (int i = 0; i < node.getExpr().size(); i++) {
+            ent = null;
             node.getExpr().get(i).apply(this);
-            if (valType != entry.getParamTypeAt(i)) {
-                Log.e(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
-                        + " for function " + node.getId().getText() + ". Expecting "
-                        + getType(entry.getParamTypeAt(i)) + " got " + getType(valType));
+            TableEntry entry = ent;
+            int valueType;
+            if (entry == null) {
+                valueType = valType;
+            } else {
+                valueType = entry.getType();
             }
 
-            if (entry.byRef(i) && !lVal) {
-                Log.e(getPos(node.getId()), "Cannot pass rvalue by ref "
-                        + " for argument " + i + " for function " + node.getId());
-                System.exit(-1);
+            try {
+                if (valueType != functionEntry.getParamTypeAt(i)) {
+                    exit(getPos(node.getId()), "Parameter mismatch at argument " + (i + 1)
+                            + " for function " + node.getId().getText() + ". Expecting "
+                            + getType(functionEntry.getParamTypeAt(i)) + " got " + getType(valType));
+                }
+            } catch (IndexOutOfBoundsException ioobe) {
+                exit(getPos(node.getId()), "Array index out of bounds");
             }
 
-            ArrayList<ArrayList<TId>> parameters = entry.getParameters();
-            for (ArrayList<TId> params : parameters) {
-                for (TId id : params) {
-                    if (entry.byRef(i)) {
-                        iCode.genQuad(Constants.OP_PAR, id.getText(), Constants.PAR_REF, value);
-                    } else {
-                        iCode.genQuad(Constants.OP_PAR, id.getText(), Constants.PAR_VAL, value);
+            if (valueType == Constants.INT_ARR || valueType == Constants.CHAR_ARR) {
+                if (lVal && !isString) {
+                    if (ent == null) {
+                        exit(getPos(token), "Entry is null");
+                    }
+
+                    ArrayEntry arrayEntry = (ArrayEntry) ent;
+                    if (arrayEntry.getDimensionsSize() != functionEntry.getParamDimensions(i)) {
+                        exit(getPos(token), "Array dimension mismatch for argument " +
+                                (i + 1) + " to function " + node.getId() + ". Expecting " +
+                                functionEntry.getParamDimensions(i) + " got " + arrayEntry.getDimensionsSize());
                     }
                 }
             }
+
+            if (functionEntry.byRef(i) && !lVal) {
+                exit(getPos(node.getId()), "Cannot pass right value by ref "
+                        + " for argument " + i + " for function " + node.getId());
+            }
+
+            if (functionEntry.byRef(i)) {
+                iCode.genQuad(Constants.OP_PAR, Constants.PAR_REF, null, value);
+            } else {
+                iCode.genQuad(Constants.OP_PAR, Constants.PAR_VAL, null, value);
+            }
         }
-        iCode.genQuad(Constants.OP_CALL, funcName, null, null);
-        funcCall = false;
+        fromFunc = false;
+        iCode.genQuad(Constants.OP_PAR, Constants.PAR_RET, null, iCode.newTmp());
+        iCode.genQuad(Constants.OP_CALL, node.getId().getText(), null, null);
     }
 
 }

@@ -62,10 +62,6 @@ public class Quad {
                 return "if";
             case Constants.OP_JUMP:
                 return "jump";
-            case Constants.OP_LBL:
-                return "label";
-            case Constants.OP_JUMPL:
-                return "jump-label";
             case Constants.OP_CALL:
                 return "call";
             case Constants.OP_PAR:
