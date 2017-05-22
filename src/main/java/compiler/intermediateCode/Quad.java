@@ -3,16 +3,18 @@ package compiler.intermediateCode;
 import compiler.etc.Constants;
 
 public class Quad {
+    private int id;
     private int op;
     private String src1;
     private String src2;
     private String trgt;
 
-    Quad(int op, String src1, String src2, String trgt) {
+    Quad(int id, int op, String src1, String src2, String trgt) {
         this.op = op;
         this.src1 = src1;
         this.src2 = src2;
         this.trgt = trgt;
+        this.id = id;
     }
 
 
@@ -68,6 +70,10 @@ public class Quad {
                 return "parameter";
             case Constants.OP_RET:
                 return "return";
+            case Constants.OP_NOOP:
+                return ";;";
+            case Constants.OP_NOT:
+                return "~";
             default:
                 return "OP_UNKNOWN";
         }
@@ -75,6 +81,6 @@ public class Quad {
 
     @Override
     public String toString() {
-        return getOpName(op) + ", " + src1 + ", " + src2 + ", " + trgt;
+        return id + ": " + getOpName(op) + ", " + src1 + ", " + src2 + ", " + trgt;
     }
 }

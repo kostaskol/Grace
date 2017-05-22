@@ -12,6 +12,7 @@ import graceLang.analysis.DepthFirstAdapter;
 import graceLang.node.*;
 import compiler.etc.Log;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 public class Translation extends DepthFirstAdapter {
@@ -89,6 +90,19 @@ public class Translation extends DepthFirstAdapter {
         if (op.equals(">"))                     return Constants.GT;
         if (op.equals(">="))                    return Constants.GTE;
                                                 return Constants.OP_UNKNOWN;
+    }
+
+    private int getCompOp(String op) {
+        op = op.replaceAll("\\s+", "");
+        switch (getComp(op)) {
+            case Constants.LT:                  return Constants.OP_LT;
+            case Constants.LTE:                 return Constants.OP_LTE;
+            case Constants.EQ:                  return Constants.OP_EQ;
+            case Constants.OP_NEQ:              return Constants.OP_NEQ;
+            case Constants.GT:                  return Constants.OP_GT;
+            case Constants.GTE:                 return Constants.OP_GTE;
+            default:                            return Constants.OP_UNKNOWN;
+        }
     }
 
     // Returns an ArrayList of all of the built-in functions
@@ -412,6 +426,8 @@ public class Translation extends DepthFirstAdapter {
     // Function type
     private int funcType;
 
+    private boolean firstFunc = true;
+
 
     @Override
     public void caseAFuncDef(AFuncDef node) {
@@ -435,6 +451,13 @@ public class Translation extends DepthFirstAdapter {
 
         // and its name
         funcName = node.getFuncName();
+
+        if (firstFunc) {
+            firstFunc = false;
+            if ((this.params.size() != 0) || (getType(node.getRetType()) != Constants.NOTHING)) {
+                exit(getPos(node.getFuncName()), "The most outer function cannot take parameters and must return nothing");
+            }
+        }
 
 
         // At this point, we can declare the function definition in the symbol table
@@ -720,19 +743,6 @@ public class Translation extends DepthFirstAdapter {
         value = newTmp;
     }
 
-
-    @Override
-    public void caseAIfNoElseStatement(AIfNoElseStatement node) {
-        super.caseAIfNoElseStatement(node);
-    }
-
-
-    @Override
-    public void caseAIfElseStatement(AIfElseStatement node) {
-        super.caseAIfElseStatement(node);
-    }
-
-
     @Override
     public void caseARetStStatement(ARetStStatement node) {
         // Get the returned expression value and type
@@ -755,34 +765,168 @@ public class Translation extends DepthFirstAdapter {
         iCode.genQuad(Constants.OP_RET, null, null, value);
     }
 
-
     @Override
     public void caseAWhileStStatement(AWhileStStatement node) {
-        super.caseAWhileStStatement(node);
+        ArrayList<Integer> trueList = new ArrayList<>();
+        trueLists.push(trueList);
+
+        ArrayList<Integer> falseList = new ArrayList<>();
+        falseLists.push(falseList);
+
+        int firstSt = iCode.nextQuad();
+        node.getCond().apply(this);
+
+        // True statements will get in the while loop
+        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
+        node.getStatement().apply(this);
+
+        iCode.genQuad(Constants.OP_JUMP, null, null, String.valueOf(firstSt));
+        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
+        iCode.genQuad(Constants.OP_NOOP, null, null, null);
+
+        falseLists.pop();
+        trueLists.pop();
+
+    }
+
+    @Override
+    public void caseAIfNoElseStatement(AIfNoElseStatement node) {
+        ArrayList<Integer> trueList = new ArrayList<>();
+        trueLists.push(trueList);
+        ArrayList<Integer> falseList = new ArrayList<>();
+        falseLists.push(falseList);
+
+        isCompOp = false;
+        node.getCond().apply(this);
+
+        if (isCompOp) {
+            Log.d("If Else", "Generating code");
+            trueLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+            falseLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+        }
+
+        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
+
+        node.getStatement().apply(this);
+
+        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
+        iCode.genQuad(Constants.OP_NOOP, null, null, null);
+
+        trueLists.pop();
+        falseLists.pop();
+        skipLists.pop();
     }
 
 
-    private boolean isCond;
+    private ArrayDeque<ArrayList<Integer>> trueLists = new ArrayDeque<>();
+    private ArrayDeque<ArrayList<Integer>> falseLists = new ArrayDeque<>();
+    private ArrayDeque<ArrayList<Integer>> skipLists = new ArrayDeque<>();
+    @Override
+    public void caseAIfElseStatement(AIfElseStatement node) {
+        ArrayList<Integer> trueList = new ArrayList<>();
+        trueLists.push(trueList);
+        ArrayList<Integer> falseList = new ArrayList<>();
+        falseLists.push(falseList);
+        ArrayList<Integer> skipList = new ArrayList<>();
+        skipLists.push(skipList);
+
+        isCompOp = false;
+        node.getCond().apply(this);
+
+        if (isCompOp) {
+            Log.d("If Else", "Generating code");
+            trueLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+            falseLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+        }
+
+        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
+
+        node.getIf().apply(this);
+
+        skipLists.peek().add(iCode.nextQuad());
+        iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+
+        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
+        node.getElse().apply(this);
+
+        iCode.backPatch(skipLists.peek(), iCode.nextQuad());
+        iCode.genQuad(Constants.OP_NOOP, null, null, null);
+
+        trueLists.pop();
+        falseLists.pop();
+        skipLists.pop();
+    }
+
+
+    private boolean isCompOp;
+    // TODO: Holy fucking shit just solve this one....
     @Override
     public void caseAOrCond(AOrCond node) {
-        super.caseAOrCond(node);
+        isCompOp = false;
+        node.getLeft().apply(this);
+
+        // TODO: cond and cond or cond doesn't work (some if statements are procuced
+        // TODO: multiple times). Figure out what this is about
+        if (isCompOp) {
+            trueLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+        }
+
+        isCompOp = false;
+        node.getRight().apply(this);
+
+        if (isCompOp) {
+            trueLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+
+            falseLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+        }
+        isCompOp = false;
+
     }
 
 
     @Override
     public void caseAAndCond(AAndCond node) {
-        super.caseAAndCond(node);
+        isCompOp = false;
+        node.getLeft().apply(this);
+
+        if (isCompOp) {
+            falseLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+        }
+
+        isCompOp = false;
+        node.getRight().apply(this);
+
+        if (isCompOp) {
+            falseLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+
+            trueLists.peek().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+        }
+        isCompOp = false;
     }
 
 
     @Override
     public void caseANotCond(ANotCond node) {
-        super.caseANotCond(node);
+        node.getOperand().apply(this);
+        iCode.genQuad(Constants.OP_NOT, value, null, null);
+        isCompOp = true;
     }
 
 
     @Override
     public void caseACompCond(ACompCond node) {
+        isCompOp = true;
+        Log.d("Comp op", "Checking condition");
         // Get the value and the type of the left expression
         node.getLeft().apply(this);
         int leftType = valType;
@@ -801,8 +945,10 @@ public class Translation extends DepthFirstAdapter {
             exit(getPos(node.getCompOperator()), "Invalid comparison (Array operand)");
         }
 
-        Log.d(getPos(node.getCompOperator()), "Comparison between " + leftValue +
-                " and " + value);
+        String newTmp = iCode.newTmp();
+        iCode.genQuad(getCompOp(node.getCompOperator().getText()), leftValue, value, newTmp);
+        value = newTmp;
+
     }
 
 

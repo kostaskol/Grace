@@ -46,6 +46,7 @@ public class Constants {
     public static final int OP_LT           = 4043;
     public static final int OP_LTE          = 4044;
     public static final int OP_NEQ          = 4045;
+    public static final int OP_NOT          = 4046;
 
     public static final int OP_IF           = 405;
     public static final int OP_JUMP         = 406;
@@ -53,6 +54,8 @@ public class Constants {
     public static final int OP_CALL         = 408;
     public static final int OP_PAR          = 409;
     public static final int OP_RET          = 410;
+
+    public static final int OP_NOOP         = 500;
 
     public static final int OP_UNKN         = 411;
 

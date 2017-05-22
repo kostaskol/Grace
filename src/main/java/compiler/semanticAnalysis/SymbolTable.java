@@ -139,7 +139,6 @@ public class SymbolTable {
         return true;
     }
 
-
     public TableEntry getEntry(String name) {
         name = name.replaceAll("\\s+", "");
 
