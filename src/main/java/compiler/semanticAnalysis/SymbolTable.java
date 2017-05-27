@@ -1,6 +1,8 @@
 package compiler.semanticAnalysis;
 
 
+import com.sun.corba.se.impl.orbutil.closure.Constant;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import compiler.etc.Constants;
 import compiler.etc.Log;
 import compiler.semanticAnalysis.tableEntries.ArrayEntry;
@@ -15,6 +17,7 @@ public class SymbolTable {
 
     private ArrayList<Integer> scopeTypes;
     private ArrayList<String> scopeNames;
+    private ArrayDeque<Boolean> hasRet;
 
     private int depth;
 
@@ -22,6 +25,7 @@ public class SymbolTable {
         namespaceS = new ArrayDeque<>();
         scopeTypes = new ArrayList<>();
         scopeNames = new ArrayList<>();
+        hasRet = new ArrayDeque<>();
         depth = -1;
     }
 
@@ -45,11 +49,21 @@ public class SymbolTable {
                 if (!ent.isDefined()) return ent.getName();
             }
         }
+
         if (--depth != 0) {
+            try {
+                if (scopeTypes.get(scopeTypes.size() - 1) != Constants.NOTHING && !hasRet.peek()) {
+                    return "ret";
+                }
+            } catch (NullPointerException npe) {
+                return "ret";
+            }
+
             scopeTypes.remove(scopeTypes.size() - 1);
             scopeNames.remove(scopeNames.size() - 1);
         }
-        return null;
+
+        return "OK";
     }
 
     public boolean setValue(String entryName, String value) {
@@ -164,6 +178,13 @@ public class SymbolTable {
 
     public int getDepth() { return depth; }
 
+    public void hasRet() {
+        if (hasRet.size() != 0) {
+            hasRet.pop();
+        }
+        hasRet.push(true);
+    }
+
     public void print() {
         Iterator<LinkedHashMap<String, TableEntry>> iter;
         try {
@@ -202,6 +223,5 @@ public class SymbolTable {
             }
             System.out.println("--------------------NEXT SCOPE-------------------");
         }
-    Log.d("Symbol Table", "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Printed everyting!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
 }

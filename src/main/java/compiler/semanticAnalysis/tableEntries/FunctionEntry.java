@@ -76,14 +76,6 @@ public class FunctionEntry extends TableEntry {
                 break;
             }
 
-            // TODO: Fix this
-            //prot.append(this.parameters.get(i).get(0));
-//            for (int j = 1; j < this.parameters..size(); j++) {
-//                prot.append(", ")
-//                        .append(this.parameters.get(i).get(j));
-//
-//            }
-
             prot.append(" : ").append(Translation.getType(this.paramType.get(i)).replace("[]", ""));
             for (int j = 0; j < this.paramDimens.get(i).size(); j++) {
                 prot.append("[").append(this.paramDimens.get(i).get(j)).append("]");

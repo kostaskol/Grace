@@ -36,37 +36,23 @@ public class Intermediate {
     }
 
     public void backPatch(ArrayList<Integer> list, int trgt) {
-        for (int lbl : list) {
-            if (!this.quads.get(lbl).getTrgt().equals("*")) {
-                Log.w("Backpatch", "Replacing non-star target");
-            }
-
-            this.quads.get(lbl).setTrgt(String.valueOf(trgt));
-        }
+        backPatch(list, trgt, false);
     }
 
-    /**
-     * Used to backpatch all of the true or false statements in
-     * a given range
-     */
-    /*public void backPatch(int start, int end, int trgt, boolean type) {
-        for (int i = start; i < end; i++) {
-            if (type) {
-                if (this.quads.get(i).getTrgt().equals("t")) {
-                    this.quads.get(i).setTrgt(String.valueOf(trgt));
-                }
-            } else {
-                if (this.quads.get(i).getTrgt().equals("f")) {
-                    this.quads.get(i).setTrgt(String.valueOf(trgt));
-                }
-            }
-        }
-    }*/
+    public void backPatch(ArrayList<Integer> list, int trgt, boolean ovrd) {
+		for (int lbl : list) {
+			if (!ovrd)
+				if (!this.quads.get(lbl).getTrgt().equals("*"))
+					continue;
 
+			this.quads.get(lbl).setTrgt(String.valueOf(trgt));
+		}
+	}
 
     public void show() {
+        System.out.println("Printing intermediate code");
         for (Quad q : quads) {
-            Log.d("Intermediate", q.toString());
+            System.out.println(q.toString());
         }
     }
 

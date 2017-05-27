@@ -519,7 +519,9 @@ public class Translation extends DepthFirstAdapter {
 
         String name = symbolTable.exitScope();
         // Check if all function "promises" have been fulfilled
-        if (name != null) {
+        if (name.equals("ret")) {
+            exit("No return statement", "No return statement for function " + funcName + " of type " + node.getRetType());
+        } else if (!name.equals("OK")) {
             exit("Function Undefined", "Function " + name + " was never defined");
         }
 
@@ -748,168 +750,244 @@ public class Translation extends DepthFirstAdapter {
         // Get the returned expression value and type
         // and query the symbol table to figure out
         // if the returned type is the same as the current scope's one
-        node.getExpr().apply(this);
-        int scopeType = symbolTable.getCurrScopeType();
-        if (scopeType != valType) {
-            exit(getPos(node.getReturn()), "Bad return type. Expecting "
-                    + getType(scopeType)
-                    + ", got " + getType(valType));
+        if (node.getExpr() != null) {
+            node.getExpr().apply(this);
+            int scopeType = symbolTable.getCurrScopeType();
+            if (scopeType != valType) {
+                exit(getPos(node.getReturn()), "Bad return type. Expecting "
+                        + getType(scopeType)
+                        + ", got " + getType(valType));
+            }
+        } else {
+            int scopeType = symbolTable.getCurrScopeType();
+            if (scopeType != Constants.NOTHING) {
+                exit(getPos(node.getReturn()), "Bad return type. Expecting " + getType(scopeType) + ". Got nothing");
+            }
         }
 
-//        String register = iCode.getRetRegister();
-//        if (register == null) {
-//            exit(getPos(node.getReturn()), "Could not find any return statements (why?)");
-//        }
+        symbolTable.hasRet();
 
-        // iCode.genQuad(Constants.OP_ASS, value, null, register);
         iCode.genQuad(Constants.OP_RET, null, null, value);
     }
 
     @Override
     public void caseAWhileStStatement(AWhileStStatement node) {
-        ArrayList<Integer> trueList = new ArrayList<>();
-        trueLists.push(trueList);
-
-        ArrayList<Integer> falseList = new ArrayList<>();
-        falseLists.push(falseList);
+		trueLists.add(new ArrayList<>());
+		falseLists.add(new ArrayList<>());
+		staticTrueLists.add(new ArrayList<>());
 
         int firstSt = iCode.nextQuad();
         node.getCond().apply(this);
 
+        if (isCompOp) {
+        	trueLists.peekLast().add(iCode.nextQuad());
+        	iCode.genQuad(Constants.OP_IF, value, null, "*");
+
+        	falseLists.peekLast().add(iCode.nextQuad());
+        	iCode.genQuad(Constants.OP_JMP, null, null, "*");
+		}
+
         // True statements will get in the while loop
-        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
+        iCode.backPatch(trueLists.pop(), iCode.nextQuad());
+        iCode.backPatch(staticTrueLists.pop(), iCode.nextQuad());
         node.getStatement().apply(this);
-
-        iCode.genQuad(Constants.OP_JUMP, null, null, String.valueOf(firstSt));
-        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
-        iCode.genQuad(Constants.OP_NOOP, null, null, null);
-
-        falseLists.pop();
-        trueLists.pop();
+        iCode.genQuad(Constants.OP_JMP, null, null, String.valueOf(firstSt));
+		iCode.backPatch(falseLists.pop(), iCode.nextQuad());
+		iCode.genQuad(Constants.OP_NOOP, null, null, null);
 
     }
 
     @Override
     public void caseAIfNoElseStatement(AIfNoElseStatement node) {
-        ArrayList<Integer> trueList = new ArrayList<>();
-        trueLists.push(trueList);
-        ArrayList<Integer> falseList = new ArrayList<>();
-        falseLists.push(falseList);
+        trueLists.add(new ArrayList<>());
+        falseLists.add(new ArrayList<>());
+        staticTrueLists.add(new ArrayList<>());
 
         isCompOp = false;
         node.getCond().apply(this);
 
         if (isCompOp) {
-            Log.d("If Else", "Generating code");
-            trueLists.peek().add(iCode.nextQuad());
+            trueLists.peekLast().add(iCode.nextQuad());
             iCode.genQuad(Constants.OP_IF, value, null, "*");
-            falseLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+            falseLists.peekLast().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JMP, null, null, "*");
         }
 
-        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
+        iCode.backPatch(staticTrueLists.pop(), iCode.nextQuad(), true);
+        iCode.backPatch(trueLists.pop(), iCode.nextQuad());
 
         node.getStatement().apply(this);
 
-        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
+        iCode.backPatch(falseLists.pop(), iCode.nextQuad());
         iCode.genQuad(Constants.OP_NOOP, null, null, null);
-
-        trueLists.pop();
-        falseLists.pop();
-        skipLists.pop();
     }
 
 
     private ArrayDeque<ArrayList<Integer>> trueLists = new ArrayDeque<>();
+    private ArrayDeque<ArrayList<Integer>> staticTrueLists = new ArrayDeque<>();
     private ArrayDeque<ArrayList<Integer>> falseLists = new ArrayDeque<>();
     private ArrayDeque<ArrayList<Integer>> skipLists = new ArrayDeque<>();
     @Override
     public void caseAIfElseStatement(AIfElseStatement node) {
-        ArrayList<Integer> trueList = new ArrayList<>();
-        trueLists.push(trueList);
-        ArrayList<Integer> falseList = new ArrayList<>();
-        falseLists.push(falseList);
-        ArrayList<Integer> skipList = new ArrayList<>();
-        skipLists.push(skipList);
+    	trueLists.add(new ArrayList<>());
+    	falseLists.add(new ArrayList<>());
+    	staticTrueLists.add(new ArrayList<>());
+    	skipLists.add(new ArrayList<>());
 
-        isCompOp = false;
-        node.getCond().apply(this);
+    	isCompOp = false;
+    	node.getCond().apply(this);
 
-        if (isCompOp) {
-            Log.d("If Else", "Generating code");
-            trueLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_IF, value, null, "*");
-            falseLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
-        }
+    	if (isCompOp) {
+    		trueLists.peekLast().add(iCode.nextQuad());
+    		iCode.genQuad(Constants.OP_IF, value, null, "*");
+    		falseLists.peekLast().add(iCode.nextQuad());
+    		iCode.genQuad(Constants.OP_JMP, null, null, "*");
+		}
 
-        iCode.backPatch(trueLists.peek(), iCode.nextQuad());
+		iCode.backPatch(staticTrueLists.pop(), iCode.nextQuad(), true);
+    	iCode.backPatch(trueLists.pop(), iCode.nextQuad());
 
-        node.getIf().apply(this);
+    	node.getIf().apply(this);
 
-        skipLists.peek().add(iCode.nextQuad());
-        iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+    	skipLists.peekLast().add(iCode.nextQuad());
+    	iCode.genQuad(Constants.OP_JMP, null, null, "*");
+    	iCode.backPatch(falseLists.pop(), iCode.nextQuad());
 
-        iCode.backPatch(falseLists.peek(), iCode.nextQuad());
-        node.getElse().apply(this);
+    	node.getElse().apply(this);
 
-        iCode.backPatch(skipLists.peek(), iCode.nextQuad());
-        iCode.genQuad(Constants.OP_NOOP, null, null, null);
-
-        trueLists.pop();
-        falseLists.pop();
-        skipLists.pop();
+    	iCode.backPatch(skipLists.pop(), iCode.nextQuad());
+    	iCode.genQuad(Constants.OP_NOOP, null, null, null);
     }
 
+    // For ORs:
+    //         1              2
+    // (x > y and x < 5) or y > 3
+    // 1's falses will go to 2
+    // 1's trues will go to the if
 
+
+    //         1             2
+    // (x > y or x < 5) or y > 3
+    // 1's falses will go to 2
+    // 1's trues will go to if
+
+    // No matter what, the falses will go to
+    // number 2
+
+    // For ORs:
+    // True lists, leave the condition
+    // False lists, go to the next comparison
+
+    // Is comp op means that
+    // we have written the comparison but not the if
     private boolean isCompOp;
-    // TODO: Holy fucking shit just solve this one....
     @Override
-    public void caseAOrCond(AOrCond node) {
-        isCompOp = false;
+    public void caseAOrCond(AOrCond node)
+	{
         node.getLeft().apply(this);
 
-        // TODO: cond and cond or cond doesn't work (some if statements are procuced
-        // TODO: multiple times). Figure out what this is about
-        if (isCompOp) {
-            trueLists.peek().add(iCode.nextQuad());
+        if (isCompOp)
+        {
+            // If the left cond was a comparison operation,
+            // we create the IFs for it
+            // Since we're an OR, our true list will go to
+            // whatever lies next,
+            // and our false list we'll simply "fall into" the right condition
+			trueLists.peek().add(iCode.nextQuad());
             iCode.genQuad(Constants.OP_IF, value, null, "*");
+            //falseLists.add(iCode.nextQuad());
+            //iCode.genQuad(Constants.OP_JMP, null, null, "*");
+        } else {
+            // We are coming in from another conditional and not a simple comparison
+            // Backpatch the false list.
+            // Whatever the previous condition was, their false list will
+            // get us here (since we're an OR condition and short-circuiting
+            // "happens to false"
+			staticTrueLists.peekLast().addAll(trueLists.peekLast());
+            iCode.backPatch(falseLists.getLast(), iCode.nextQuad());
+
+            // Do we have any lists? Do we need them?
+            // Only if one cond is a comparison operation
         }
 
-        isCompOp = false;
+
+        // We apply the right condition.
+
         node.getRight().apply(this);
 
         if (isCompOp) {
-            trueLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_IF, value, null, "*");
+            // If it's a comparison operation
+            // the backpatching has already been taken care of
 
-            falseLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
-        }
+            // We create an if and add it to the true lists
+            trueLists.peekLast().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_IF, value, null, "*");
+            // We create a jump and add it to the false lists
+            falseLists.peekLast().add(iCode.nextQuad());
+            iCode.genQuad(Constants.OP_JMP, null, null, "*");
+        } else {
+			staticTrueLists.peekLast().addAll(trueLists.peekLast());
+        	/* else {
+            If it wasn't a comparison operation
+            We simply ignore it (since every list has been properly set up
+            and we will backpatch it in the next conditional (or the if))
+        } */
+		}
+
+
         isCompOp = false;
 
     }
 
 
+	// Could we separate cases?
+	// For ORs:
+	//         1              2
+	// (x > y and x < 5) or y > 3
+	// 1's falses will go to 2
+	// 1's trues will go to the if
+
+
+	//         1             2
+	// (x > y or x < 5) or y > 3
+	// 1's falses will go to 2
+	// 1's trues will go to if
+
+	// No matter what, the falses will go to
+	// number 2
+
+	// For ORs:
+	// True lists, leave the condition
+	// False lists, go to the next comparison
     @Override
     public void caseAAndCond(AAndCond node) {
-        isCompOp = false;
-        node.getLeft().apply(this);
+		isCompOp = false;
+		node.getLeft().apply(this);
 
-        if (isCompOp) {
-            falseLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_IF, value, null, "*");
-        }
+		// For AND conditions
+		// If the first condition is true,
+		// check the next one.
+		// If it's not, add it to the false list
+		if (isCompOp) {
+			trueLists.peekLast().add(iCode.nextQuad());
+			iCode.genQuad(Constants.OP_IF, value, null, "*");
+			falseLists.peekLast().add(iCode.nextQuad());
+			iCode.genQuad(Constants.OP_JMP, null, null, "*");
+		}
+
+		// No matter what, the false list
+		// will lead us to the next quad
+		iCode.backPatch(trueLists.pop(), iCode.nextQuad());
+		trueLists.add(new ArrayList<>());
 
         isCompOp = false;
         node.getRight().apply(this);
 
         if (isCompOp) {
-            falseLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_IF, value, null, "*");
-
-            trueLists.peek().add(iCode.nextQuad());
-            iCode.genQuad(Constants.OP_JUMP, null, null, "*");
+			trueLists.peekLast().add(iCode.nextQuad());
+			iCode.genQuad(Constants.OP_IF, value, null, "*");
+			falseLists.peekLast().add(iCode.nextQuad());
+			iCode.genQuad(Constants.OP_JMP, null, null, "*");
         }
         isCompOp = false;
     }
@@ -918,15 +996,20 @@ public class Translation extends DepthFirstAdapter {
     @Override
     public void caseANotCond(ANotCond node) {
         node.getOperand().apply(this);
-        iCode.genQuad(Constants.OP_NOT, value, null, null);
+        iCode.genQuad(Constants.OP_NOT, value, null, value);
         isCompOp = true;
     }
 
 
     @Override
     public void caseACompCond(ACompCond node) {
-        isCompOp = true;
-        Log.d("Comp op", "Checking condition");
+
+		if (isCompOp) {
+			// If we're coming here from another comparison operation
+			// we must first backpatch the false list to this sequence of
+			// calls
+			falseLists.peekLast().add(iCode.nextQuad());
+        }
         // Get the value and the type of the left expression
         node.getLeft().apply(this);
         int leftType = valType;
@@ -945,10 +1028,12 @@ public class Translation extends DepthFirstAdapter {
             exit(getPos(node.getCompOperator()), "Invalid comparison (Array operand)");
         }
 
+
         String newTmp = iCode.newTmp();
         iCode.genQuad(getCompOp(node.getCompOperator().getText()), leftValue, value, newTmp);
         value = newTmp;
 
+        isCompOp = true;
     }
 
 
@@ -1139,7 +1224,7 @@ public class Translation extends DepthFirstAdapter {
                 if (dimenList.size() != entry.getDimensionsSize()) {
                     exit(getPos(token), "Array dimensions don't match");
                 }
-                // TODO: We can't just assign this. We need to get the
+                // We need to get the
                 // n-dimensional offset
                 // The linear offset for an n-dimensional call is:
                 // dimen1 * dimen1Max + dimen2 * dimen2Max + ... + dimenN-1 * dimenN-1Max + dimenN
@@ -1224,7 +1309,6 @@ public class Translation extends DepthFirstAdapter {
             }
 
             if (valueType == Constants.INT_ARR || valueType == Constants.CHAR_ARR) {
-                Log.d("FuncExpr", "isString is " + isString);
                 if (lVal && !isString) {
                     if (ent == null) {
                         exit(getPos(token), "Entry is null");

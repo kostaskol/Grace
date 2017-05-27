@@ -49,7 +49,7 @@ public class Constants {
     public static final int OP_NOT          = 4046;
 
     public static final int OP_IF           = 405;
-    public static final int OP_JUMP         = 406;
+    public static final int OP_JMP = 406;
 
     public static final int OP_CALL         = 408;
     public static final int OP_PAR          = 409;
