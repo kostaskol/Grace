@@ -1,6 +1,5 @@
 package compiler.etc;
 
-
 public class Log {
     public static void d(String context, String message) {
         System.out.println(context + " : " + message);

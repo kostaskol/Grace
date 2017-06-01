@@ -1,5 +1,5 @@
-Unit: unit, <name>, -, -
-End Unit: endu, <name>, -, -
+Unit: 'unit', <name>, -, -
+End Unit: 'endu', <name>, -, -
 Op: <op>, src1, src2, trgt
 Assignment: :=, src, -, trgt
 Array: 'offs', <var_name>, <offset>, target

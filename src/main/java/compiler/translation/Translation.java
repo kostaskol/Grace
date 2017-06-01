@@ -20,12 +20,12 @@ public class Translation extends DepthFirstAdapter {
     private SymbolTable symbolTable;
     private Intermediate iCode;
 
-    // The following 9 functions are utility functions
+    // The following functions are utility functions
     private String getPos(Token t) {
         return "E: At line #" + t.getLine();
     }
 
-    // These two could be replaced by the normal "String" one
+
     private int getType(PRetType ret) {
 
         String retType = ret.toString();
@@ -370,6 +370,7 @@ public class Translation extends DepthFirstAdapter {
         return entries;
     }
 
+    // Exits the program with undefined - redefined error messages
     private void eUndefined(Token t) {
         Log.e(getPos(t), t.getText() +
                 " was not declared within the " +
@@ -383,6 +384,7 @@ public class Translation extends DepthFirstAdapter {
         System.exit(-1);
     }
 
+    // Exits the program with a specific error message
     private void exit(String context, String msg) {
         Log.e(context, msg);
         System.exit(-1);
@@ -394,6 +396,8 @@ public class Translation extends DepthFirstAdapter {
         // and enter into the 0-th scope
         symbolTable = new SymbolTable();
         symbolTable.enterScope();
+
+        // Get all of the built-in functions
         ArrayList<TableEntry> entries = getBuiltIn();
         for (TableEntry entry : entries) {
             symbolTable.addEntry(entry);
@@ -402,15 +406,17 @@ public class Translation extends DepthFirstAdapter {
         // Enter into the 1st scope
         symbolTable.enterScope();
 
+        // Initialise the intermediate code object
         iCode = new Intermediate();
 
+        // Start the semantic analysis
         node.getFuncDef().apply(this);
 
         iCode.show();
 
     }
 
-    // Each time we visit a parent node, we properly initialise
+    // Each time we visit a function declaration - definition node, we properly initialise
     // the following objects, which are filled in by the children as we visit them
 
     // Parameter names
@@ -428,7 +434,6 @@ public class Translation extends DepthFirstAdapter {
 
     private boolean firstFunc = true;
 
-
     @Override
     public void caseAFuncDef(AFuncDef node) {
         // Function definition
@@ -440,7 +445,7 @@ public class Translation extends DepthFirstAdapter {
         paramDimens = new ArrayList<>();
 
         // After each iteration, the above lists will contain one more
-        // element each
+        // list of data each
         for (PPDec dec : node.getPDec()) {
             // Iterate over the parameters
             dec.apply(this);
@@ -452,10 +457,14 @@ public class Translation extends DepthFirstAdapter {
         // and its name
         funcName = node.getFuncName();
 
+        // We need to make sure that the first defined function
+		// takes no arguments and returns nothing
+		// 'fun <name> () : nothing'
         if (firstFunc) {
             firstFunc = false;
             if ((this.params.size() != 0) || (getType(node.getRetType()) != Constants.NOTHING)) {
-                exit(getPos(node.getFuncName()), "The most outer function cannot take parameters and must return nothing");
+                exit(getPos(node.getFuncName()), "The outermost function cannot take parameters and " +
+						"must return nothing");
             }
         }
 
@@ -471,6 +480,7 @@ public class Translation extends DepthFirstAdapter {
             eDeclared(funcName);
         }
 
+        // Each function is inserted into the same scope as the one it was declared in
         symbolTable.enterScope();
 
         // Each scope has its own type (the function's return type.
@@ -484,6 +494,7 @@ public class Translation extends DepthFirstAdapter {
             // we save each parameter in the symbol table
             if (paramType.get(i) == Constants.INT_ARR || paramType.get(i) == Constants.CHAR_ARR) {
                 for (TId id : params.get(i)) {
+                	// The declared parameter is an array
                     ArrayList<String> tmp = new ArrayList<>();
                     tmp.add("0");
                     entry = new ArrayEntry(id.getText(), paramType.get(i), true, tmp);
@@ -493,6 +504,7 @@ public class Translation extends DepthFirstAdapter {
                     }
                 }
             } else {
+            	// The declared parameter is a scalar variable
                 for (TId id : params.get(i)) {
                     entry = new ScalarEntry(id.getText(), paramType.get(i), true, byRef.get(i));
                     if (!symbolTable.addEntry(entry)) {
@@ -794,7 +806,6 @@ public class Translation extends DepthFirstAdapter {
         iCode.genQuad(Constants.OP_JMP, null, null, String.valueOf(firstSt));
 		iCode.backPatch(falseLists.pop(), iCode.nextQuad());
 		iCode.genQuad(Constants.OP_NOOP, null, null, null);
-
     }
 
     @Override
@@ -1117,6 +1128,7 @@ public class Translation extends DepthFirstAdapter {
     public void caseAIdLVal(AIdLVal node) {
         lVal = true;
         if (node.getExpr().size() == 0) {
+        	Log.d("LVal", node.getId() + " is a scalar variable");
             // This is a scalar variable
             token = node.getId();
             name = node.getId().toString().replaceAll("\\s+", "");
@@ -1271,11 +1283,28 @@ public class Translation extends DepthFirstAdapter {
         }
     }
 
+    @Override
+    public void caseAStrOffsLVal(AStrOffsLVal node) {
+        String str = node.getStringConst().toString();
+        node.getExpr().apply(this);
+        int offset = 0;
+        try {
+            offset = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+        }
+        if (offset >= str.length()) {
+            exit(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
+                    "(Offset: " + offset + ", Length: " + str.length() + ")");
+        }
+        valType = Constants.CHAR;
+        value = str.charAt(offset) + "";
+    }
+
+
     private boolean fromFunc;
 
     @Override
     public void caseAFuncCallExpr(AFuncCallExpr node) {
-
         token = node.getId();
         FunctionEntry functionEntry = (FunctionEntry) symbolTable.getEntry(node.getId().getText());
         if (functionEntry == null) {
@@ -1295,6 +1324,7 @@ public class Translation extends DepthFirstAdapter {
         for (int i = 0; i < node.getExpr().size(); i++) {
             ent = null;
             node.getExpr().get(i).apply(this);
+            Log.d("Function Expression", "Value from expr #" + (i + 1) + " is " + value);
             TableEntry entry = ent;
             int valueType;
             if (entry == null) {
@@ -1328,6 +1358,9 @@ public class Translation extends DepthFirstAdapter {
                         + " for argument " + i + " for function " + node.getId());
             }
 
+			value = iCode.newTmp();
+			iCode.genQuad(Constants.OP_ASS, entry.getName(), null, value);
+
             if (functionEntry.byRef(i)) {
                 iCode.genQuad(Constants.OP_PAR, Constants.PAR_REF, null, value);
             } else {
@@ -1343,24 +1376,6 @@ public class Translation extends DepthFirstAdapter {
         name = functionEntry.getName();
         value = newTmp;
 
-    }
-
-
-    @Override
-    public void caseAStrOffsLVal(AStrOffsLVal node) {
-        String str = node.getStringConst().toString();
-        node.getExpr().apply(this);
-        int offset = 0;
-        try {
-            offset = Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-        }
-        if (offset >= str.length()) {
-            exit(getPos(node.getStringConst()), "Requested offset is out of bounds. " +
-                    "(Offset: " + offset + ", Length: " + str.length() + ")");
-        }
-        valType = Constants.CHAR;
-        value = str.charAt(offset) + "";
     }
 
 
@@ -1424,7 +1439,13 @@ public class Translation extends DepthFirstAdapter {
                         + " for argument " + i + " for function " + node.getId());
             }
 
-            if (functionEntry.byRef(i)) {
+            if (entry != null) {
+				value = iCode.newTmp();
+				iCode.genQuad(Constants.OP_ASS, entry.getName(), null, value);
+			}
+
+
+			if (functionEntry.byRef(i)) {
                 iCode.genQuad(Constants.OP_PAR, Constants.PAR_REF, null, value);
             } else {
                 iCode.genQuad(Constants.OP_PAR, Constants.PAR_VAL, null, value);

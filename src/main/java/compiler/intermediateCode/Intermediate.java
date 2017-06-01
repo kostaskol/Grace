@@ -6,6 +6,11 @@ import compiler.etc.Log;
 
 import java.util.ArrayList;
 
+/**
+ * Holds an ArrayList of quads. 
+ * Also allows for backpatching, generating temporary variables,
+ * etc
+ */
 public class Intermediate {
     private ArrayList<Quad> quads;
     private int tmpCounter;
@@ -25,15 +30,6 @@ public class Intermediate {
     }
 
     public String newTmp() { return "$" + tmpCounter++; }
-
-    public ArrayList<String> merge(ArrayList<String>[] arrs) {
-        ArrayList<String> lst = new ArrayList<>();
-        for (ArrayList<String> arr : arrs) {
-            lst.addAll(arr);
-        }
-
-        return lst;
-    }
 
     public void backPatch(ArrayList<Integer> list, int trgt) {
         backPatch(list, trgt, false);
